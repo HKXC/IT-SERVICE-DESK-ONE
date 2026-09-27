@@ -1,25 +1,36 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { hasPermission } from "@/lib/auth-helpers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { CreateItemForm, AdjustForm } from "@/components/inventory/stock-forms";
 
 export const dynamic = "force-dynamic";
 
 export default async function InventoryPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
-  const [items, txns] = await Promise.all([
+  const canManage = await hasPermission("inventory.manage");
+  const [items, txns, locations, vendors] = await Promise.all([
     db.inventoryItem.findMany({ orderBy: { updatedAt: "desc" }, take: 100 }),
     db.stockTransaction.findMany({
       include: { item: { select: { name: true, sku: true } } },
       orderBy: { createdAt: "desc" },
       take: 50,
     }),
+    db.location.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    db.vendor.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]);
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold">Inventory & Spare Parts</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-xl font-bold">Inventory & Spare Parts</h1>
+        {canManage && <CreateItemForm locations={locations} vendors={vendors} />}
+      </div>
+      {canManage && (
+        <AdjustForm items={items.map((i) => ({ id: i.id, name: `${i.name} (${i.sku})`, quantity: i.quantity }))} />
+      )}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader><CardTitle className="text-sm">Stock Levels</CardTitle></CardHeader>

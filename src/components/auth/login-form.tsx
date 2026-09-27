@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/lib/validations";
@@ -10,8 +11,15 @@ import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
-export function LoginForm() {
+function safeCallback(raw: string | null): string {
+  if (raw && raw.startsWith("/") && !raw.startsWith("//")) return raw;
+  return "/";
+}
+
+function LoginFormInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = safeCallback(searchParams.get("callbackUrl"));
   const [serverError, setServerError] = useState<string | null>(null);
   const {
     register,
@@ -31,7 +39,7 @@ export function LoginForm() {
           onSubmit={handleSubmit(async (v) => {
             setServerError(null);
             const res = await loginAction(v);
-            if (res.ok) router.push("/");
+            if (res.ok) router.push(callbackUrl);
             else setServerError(res.error ?? "Sign in failed");
           })}
         >
@@ -60,5 +68,13 @@ export function LoginForm() {
         </form>
       </CardContent>
     </Card>
+  );
+}
+
+export function LoginForm() {
+  return (
+    <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+      <LoginFormInner />
+    </Suspense>
   );
 }

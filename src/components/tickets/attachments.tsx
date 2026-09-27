@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, FileText, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
+import { Upload, FileText, AlertTriangle, CheckCircle2, Loader2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -85,18 +85,17 @@ export function Attachments({
               >
                 <FileText className="size-4 shrink-0 text-muted-foreground" aria-hidden />
                 <div className="min-w-0 flex-1">
-                  {a.storageUrl ? (
-                    <a
-                      href={a.storageUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="block truncate font-medium text-[#0D9488] hover:underline"
-                    >
-                      {a.fileName}
-                    </a>
-                  ) : (
-                    <p className="truncate font-medium">{a.fileName}</p>
-                  )}
+                  <a
+                    href={
+                      a.storageUrl ??
+                      `/api/tickets/${ticketId}/attachments/${a.id}/download`
+                    }
+                    target={a.storageUrl ? "_blank" : undefined}
+                    rel={a.storageUrl ? "noreferrer" : undefined}
+                    className="block truncate font-medium text-[#0D9488] hover:underline"
+                  >
+                    {a.fileName}
+                  </a>
                   <p className="text-xs text-muted-foreground">
                     {formatSize(a.fileSize)} · {new Date(a.createdAt).toLocaleString()}
                   </p>
@@ -104,7 +103,13 @@ export function Attachments({
                 {a.storageUrl ? (
                   <Badge variant="success">Link</Badge>
                 ) : (
-                  <Badge variant="secondary">Stored</Badge>
+                  <a
+                    href={`/api/tickets/${ticketId}/attachments/${a.id}/download`}
+                    className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium hover:bg-muted"
+                    aria-label={`Download ${a.fileName}`}
+                  >
+                    <Download className="size-3.5" aria-hidden /> Stored
+                  </a>
                 )}
               </li>
             ))}

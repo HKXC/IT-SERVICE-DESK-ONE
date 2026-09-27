@@ -5,23 +5,54 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export const dynamic = "force-dynamic";
 
-export default async function AssetsPage() {
+export default async function AssetsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; status?: string }>;
+}) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
-  const assets = await db.asset.findMany({
-    include: { department: true, location: true },
-    orderBy: { updatedAt: "desc" },
-    take: 100,
-  });
+  const sp = await searchParams;
+  const q = (sp.q ?? "").trim();
+  const where: Record<string, unknown> = {};
+  if (q) {
+    where.OR = [
+      { assetTag: { contains: q, mode: "insensitive" } },
+      { name: { contains: q, mode: "insensitive" } },
+      { serialNumber: { contains: q, mode: "insensitive" } },
+    ];
+  }
+  if (sp.status) where.status = sp.status;
+  const [total, assets] = await Promise.all([
+    db.asset.count({ where: where as never }),
+    db.asset.findMany({
+      where: where as never,
+      include: { department: true, location: true },
+      orderBy: { updatedAt: "desc" },
+      take: 100,
+    }),
+  ]);
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Assets ({assets.length})</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-xl font-bold">Assets ({total})</h1>
         <Link href="/assets/new"><Button>+ New Asset</Button></Link>
       </div>
+      <form action="/assets" method="get" className="flex gap-2" role="search">
+        <Input
+          name="q"
+          defaultValue={q}
+          placeholder="Tag, name, or serial…"
+          aria-label="Search assets"
+          className="max-w-sm"
+        />
+        <Button type="submit" variant="secondary">Search</Button>
+        {q && <Link href="/assets" className="self-center text-sm text-[#0D9488] hover:underline">Clear</Link>}
+      </form>
       <Card>
         <CardContent className="overflow-x-auto p-0">
           <table className="w-full min-w-[820px] text-sm">

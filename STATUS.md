@@ -1,15 +1,14 @@
 # สถานะโปรเจกต์ล่าสุด (STATUS)
 
-> อัปเดต: 2026-09-27 — ไฟล์นี้คือแหล่งความจริงเดียวของสถานะงาน
+> อัปเดต: 2026-09-28 — ไฟล์นี้คือแหล่งความจริงเดียวของสถานะงาน
 
 ## ตอนนี้ทำอะไรอยู่
 
 | รายการ | รายละเอียด |
 |---|---|
-| งานปัจจุบัน | Deploy ขึ้น Vercel |
-| ถึงขั้นไหน | โค้ดพร้อม 100% / repo พร้อม / รอกรอก env 12 ตัวบน Dashboard แล้วกด Deploy |
-| ติดอะไร | รอคนกด (ต้องทำในเบราว์เซอร์): Settings → Environment Variables → Redeploy |
-| วิธีรันดูชั่วคราว | `npm run start` ในเครื่อง → `http://localhost:3000` |
+| งานปัจจุบัน | Deploy ขึ้น Vercel (รอบ้าน) — โค้ด push ครบแล้ว |
+| preview local | `npm run start` → `http://localhost:3000` รันอยู่ เขียว |
+| ติดอะไร | รอคนกดใน Vercel Dashboard: กรอก env 4 ตัว → Deploy |
 
 ## ทำอะไรเสร็จแล้วบ้าง
 
@@ -28,15 +27,17 @@
 
 ## ยังเหลืออะไร
 
-| # | งาน | ระดับ | หมายเหตุ |
+| # | งาน | ระดับ | สถานะล่าสุด |
 |---|---|---|---|
-| 1 | Deploy Vercel (กรอก env + กด Deploy) | สูง | รอคนทำใน Dashboard |
-| 2 | ปุ่มดาวน์โหลดไฟล์แนบบน S3 (ตอนนี้เปิดได้เฉพาะ Blob URL) | สูง | ต้องเพิ่ม API download + ปุ่ม |
-| 3 | ส่งอีเมล reset-password จริง (ตอนนี้แค่ log token) | สูง | ต้องมี SMTP/Resend key |
-| 4 | `loading.tsx` / `error.tsx` ทุก route (กฎ ASTRA ข้อ 2) | กลาง | ตอนนี้มีเฉพาะจุดที่ทำใหม่ |
-| 5 | ช่อง search บน topbar (ตอนนี้แค่ placeholder) | ต่ำ | — |
-| 6 | Rotate secret ที่เคยหลุดในแชต (Neon/S3/GitHub/Vercel token) | สูง | ทำบน dashboard ของแต่ละเจ้า |
+| 1 | Deploy Vercel (กรอก env 4 ตัว + กด Deploy) | สูง | รอคนทำใน Dashboard (จำเป็นแค่ 4 ตัว ไม่ใช่ 12) |
+| 2 | ปุ่มดาวน์โหลดไฟล์แนบบน S3 | สูง | ✅ เสร็จ — API + ปุ่ม + E2E byte-compare ผ่าน |
+| 3 | ส่งอีเมล reset-password จริง | สูง | พักไว้ตามคำสั่ง (ต้องมี SMTP/Resend key) |
+| 4 | `loading.tsx` / `error.tsx` ทุก route | กลาง | ✅ เสร็จ — global + dashboard + 404 |
+| 5 | ช่อง search บน topbar | ต่ำ | ✅ เสร็จ — ค้น tickets ได้จริง + ปุ่ม `/` |
+| 6 | Rotate secret ที่เคยหลุดในแชต | สูง | ยังไม่ได้ทำ (ทำบน dashboard แต่ละเจ้า) |
 | 7 | SSO (Entra ID/Google) | อนาคต | โครงพร้อมใน `src/lib/sso.ts` |
+| 8 | ฟอร์มจัดการ: users/vendors/software-license/KB/inventory/SLA | สูง | ✅ เสร็จทั้งหมดคืนนี้ (ดูตารางทดสอบ) |
+| 9 | ปุ่ม assign/worklog/ใช้ parts/asset ops/กระดิ่ง/เมนูมือถือ | สูง | ✅ เสร็จทั้งหมดคืนนี้ |
 
 ## รันในเครื่อง (cheat)
 
@@ -53,3 +54,14 @@
 | 1 | ห้าม stub/TODO — ทุกฟังก์ชันต้องจบกระบวนการ |
 | 2 | ทุกหน้ามี loading + empty + error states |
 | 3 | ส่งงานต้องผ่านตาราง ASTRA 3 ชั้นก่อนเสมอ |
+
+## ผลทดสอบคืนนี้ (ASTRA)
+
+| ชุดทดสอบ | ผล |
+|---|---|
+| `tsc --noEmit` strict (ไม่มี `any`) | 0 errors |
+| `next build` production | ผ่าน (26 routes) |
+| API E2E (attachments + notifications) | 26/26 Pass |
+| Browser E2E (Chrome จริง 17 เคส) | 16/17 Pass — ตก 1 ข้อคือ wait redirect หลังสร้าง KB (บทความถูกสร้าง+มองเห็น+ลบได้จริง เป็นที่ timing ของเทส ไม่ใช่บั๊กแอป) |
+| TODO/FIXME ในโค้ด | 1 จุด (ส่งอีเมล reset — พักไว้ตามคำสั่ง) |
+| ข้อมูลทดสอบค้างใน DB/S3 | 0 (ลบเกลี้ยงทุกครั้ง) |

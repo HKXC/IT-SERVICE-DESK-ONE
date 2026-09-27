@@ -112,5 +112,72 @@ export const kbArticleSchema = z.object({
   isPublished: z.boolean().default(false),
 });
 
+export const inventoryItemSchema = z.object({
+  sku: z.string().min(2).max(50),
+  name: z.string().min(2).max(200),
+  category: z.string().min(1, "Category is required"),
+  brand: z.string().optional(),
+  model: z.string().optional(),
+  quantity: z.coerce.number().int().min(0).max(1000000).default(0),
+  minStock: z.coerce.number().int().min(0).max(1000000).default(5),
+  locationId: z.string().optional(),
+  unitCost: z.coerce.number().nonnegative().optional(),
+  vendorId: z.string().optional(),
+});
+
+export const vendorSchema = z.object({
+  name: z.string().min(2).max(200),
+  contactPerson: z.string().max(200).optional(),
+  email: z.string().email().optional().or(z.literal("")),
+  phone: z.string().max(50).optional(),
+  address: z.string().max(500).optional(),
+  taxId: z.string().max(50).optional(),
+});
+
+export const softwareSchema = z.object({
+  name: z.string().min(2).max(200),
+  vendor: z.string().max(200).optional(),
+  version: z.string().max(50).optional(),
+  category: z.string().max(100).optional(),
+  licenseType: z.string().max(100).optional(),
+  description: z.string().max(2000).optional(),
+});
+
+export const licenseSchema = z.object({
+  softwareId: z.string().cuid(),
+  key: z.string().max(200).optional(),
+  seatsTotal: z.coerce.number().int().min(1).max(1000000).default(1),
+  purchaseDate: z.string().optional(),
+  expiryDate: z.string().optional(),
+  cost: z.coerce.number().nonnegative().optional(),
+  vendorId: z.string().optional(),
+});
+
+export const slaPolicySchema = z.object({
+  name: z.string().min(2).max(200),
+  description: z.string().max(500).optional(),
+  p1ResponseMin: z.coerce.number().int().min(1).max(10080),
+  p1ResolutionMin: z.coerce.number().int().min(1).max(43200),
+  p2ResponseMin: z.coerce.number().int().min(1).max(10080),
+  p2ResolutionMin: z.coerce.number().int().min(1).max(43200),
+  p3ResponseMin: z.coerce.number().int().min(1).max(10080),
+  p3ResolutionMin: z.coerce.number().int().min(1).max(43200),
+  p4ResponseMin: z.coerce.number().int().min(1).max(10080),
+  p4ResolutionMin: z.coerce.number().int().min(1).max(43200),
+  atRiskPercent: z.coerce.number().int().min(1).max(99).default(75),
+  isDefault: z.boolean().default(false),
+  isActive: z.boolean().default(true),
+});
+
+export const holidaySchema = z.object({
+  name: z.string().min(2).max(200),
+  date: z.string().min(1, "Date is required"),
+});
+
+export const licenseAssignSchema = z.object({
+  licenseId: z.string().cuid(),
+  userId: z.string().cuid(),
+});
+
 export type LoginInput = z.infer<typeof loginSchema>;
 export type TicketCreateInput = z.infer<typeof ticketCreateSchema>;

@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/auth-helpers";
 import { audit } from "@/lib/audit";
-import { assetCreateSchema, stockTxnSchema } from "@/lib/validations";
+import { assetCreateSchema, stockTxnSchema, inventoryItemSchema, vendorSchema } from "@/lib/validations";
 import { revalidatePath } from "next/cache";
 
 // ─── Assets ─────────────────────────────────────────────────────────────────
@@ -197,4 +197,98 @@ export async function adjustStock(raw: unknown) {
   });
   revalidatePath("/inventory");
   return { id: result.id };
+}
+
+// ─── Inventory items ────────────────────────────────────────────────────────
+export async function createInventoryItem(raw: unknown) {
+  await requirePermission("inventory.manage");
+  const session = await auth();
+  const input = inventoryItemSchema.parse(raw);
+  const item = await db.inventoryItem.create({
+    data: {
+      sku: input.sku.trim().toUpperCase(),
+      name: input.name.trim(),
+      category: input.category.trim(),
+      brand: input.brand || null,
+      model: input.model || null,
+      quantity: input.quantity,
+      minStock: input.minStock,
+      locationId: input.locationId || null,
+      unitCost: input.unitCost ?? null,
+      vendorId: input.vendorId || null,
+    },
+  });
+  if (input.quantity > 0) {
+    await db.stockTransaction.create({
+      data: {
+        itemId: item.id,
+        type: "STOCK_IN",
+        quantity: input.quantity,
+        quantityBefore: 0,
+        quantityAfter: input.quantity,
+        reason: "Initial stock",
+        actorId: session?.user?.id,
+      },
+    });
+  }
+  await audit({
+    actorId: session?.user?.id,
+    action: "inventory.created",
+    entity: "InventoryItem",
+    entityId: item.id,
+    after: { sku: item.sku, quantity: item.quantity },
+  });
+  revalidatePath("/inventory");
+  return { id: item.id };
+}
+
+// ─── Vendors ────────────────────────────────────────────────────────────────
+export async function createVendor(raw: unknown) {
+  await requirePermission("vendor.manage");
+  const session = await auth();
+  const input = vendorSchema.parse(raw);
+  const vendor = await db.vendor.create({
+    data: {
+      name: input.name.trim(),
+      contactPerson: input.contactPerson || null,
+      email: input.email || null,
+      phone: input.phone || null,
+      address: input.address || null,
+      taxId: input.taxId || null,
+    },
+  });
+  await audit({
+    actorId: session?.user?.id,
+    action: "vendor.created",
+    entity: "Vendor",
+    entityId: vendor.id,
+    after: { name: vendor.name },
+  });
+  revalidatePath("/vendors");
+  return { id: vendor.id };
+}
+
+export async function deleteVendor(vendorId: string) {
+  await requirePermission("vendor.manage");
+  const session = await auth();
+  const vendor = await db.vendor.findUnique({ where: { id: vendorId } });
+  if (!vendor) throw new Error("Vendor not found");
+  const [assets, items, licenses] = await Promise.all([
+    db.asset.count({ where: { vendorId } }),
+    db.inventoryItem.count({ where: { vendorId } }),
+    db.license.count({ where: { vendorId } }),
+  ]);
+  if (assets + items + licenses > 0) {
+    throw new Error("Cannot delete: vendor is referenced by assets, inventory, or licenses");
+  }
+  await db.vendor.delete({ where: { id: vendorId } });
+  await audit({
+    actorId: session?.user?.id,
+    action: "vendor.deleted",
+    entity: "Vendor",
+    entityId: vendorId,
+    before: { name: vendor.name },
+  });
+  revalidatePath("/vendors");
+  return { ok: true };
 }

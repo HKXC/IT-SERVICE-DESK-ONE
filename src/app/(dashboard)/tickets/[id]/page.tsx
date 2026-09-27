@@ -6,6 +6,7 @@ import { PriorityBadge, Badge } from "@/components/ui/badge";
 import { TicketActions } from "@/components/tickets/ticket-actions";
 import { CommentBox } from "@/components/tickets/comment-box";
 import { Attachments } from "@/components/tickets/attachments";
+import { AssignControl, WorkLogForm } from "@/components/tickets/ticket-ops";
 import { canViewInternalNotes, hasPermission } from "@/lib/auth-helpers";
 import { formatDuration } from "@/lib/utils";
 
@@ -37,8 +38,21 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
   if (!ticket) notFound();
 
   const showInternal = await canViewInternalNotes();
+  const canAssign = await hasPermission("ticket.assign");
   const canUpload =
     ticket.requesterId === session.user.id || (await hasPermission("ticket.update"));
+  const [technicians, parts] = await Promise.all([
+    db.user.findMany({
+      where: { isActive: true, role: { name: { not: "Employee" } } },
+      select: { id: true, name: true, email: true },
+      orderBy: { name: "asc" },
+    }),
+    db.inventoryItem.findMany({
+      select: { id: true, name: true, quantity: true },
+      orderBy: { name: "asc" },
+      take: 200,
+    }),
+  ]);
   const comments = await db.ticketComment.findMany({
     where: { ticketId: id, ...(showInternal ? {} : { type: "PUBLIC" }) },
     include: { author: { select: { name: true } } },
@@ -147,6 +161,16 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
             </CardContent>
           </Card>
           <TicketActions ticketId={ticket.id} currentStatus={ticket.status} />
+          <AssignControl
+            ticketId={ticket.id}
+            currentAssigneeId={ticket.assigneeId}
+            canAssign={canAssign}
+            technicians={technicians.map((t) => ({
+              id: t.id,
+              name: t.name ?? t.email ?? "Unknown",
+            }))}
+          />
+          {showInternal && <WorkLogForm ticketId={ticket.id} parts={parts} />}
           <Attachments
             ticketId={ticket.id}
             canUpload={canUpload}

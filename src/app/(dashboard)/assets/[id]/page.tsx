@@ -1,8 +1,11 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { redirect, notFound } from "next/navigation";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { AssetOps } from "@/components/assets/asset-ops";
+import { hasPermission } from "@/lib/auth-helpers";
 import QRCode from "react-qr-code";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +34,19 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ id
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
   const qrValue = `${baseUrl}/scan/${asset.id}`;
 
+  const [canUpdate, canAssign, canRetire, canDispose, users] = await Promise.all([
+    hasPermission("asset.update"),
+    hasPermission("asset.assign"),
+    hasPermission("asset.retire"),
+    hasPermission("asset.dispose"),
+    db.user.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, email: true },
+      orderBy: { name: "asc" },
+      take: 500,
+    }),
+  ]);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
@@ -54,7 +70,14 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ id
             </CardContent></Card>
           <Card><CardHeader><CardTitle className="text-sm">Ticket History ({asset.tickets.length}) · Repairs: {repairCount}</CardTitle></CardHeader>
             <CardContent className="space-y-1 text-sm">
-              {asset.tickets.map((t) => <p key={t.id} className="font-mono text-xs">{t.ticketNo} · {t.title} · {t.status}</p>)}
+              {asset.tickets.map((t) => (
+                <p key={t.id} className="font-mono text-xs">
+                  <Link href={`/tickets/${t.id}`} className="text-[#0D9488] hover:underline">
+                    {t.ticketNo}
+                  </Link>{" "}
+                  · {t.title} · {t.status.replaceAll("_", " ")}
+                </p>
+              ))}
               {asset.tickets.length === 0 && <p className="text-muted-foreground">No linked tickets.</p>}
             </CardContent></Card>
           <Card><CardHeader><CardTitle className="text-sm">Asset History</CardTitle></CardHeader>
@@ -76,6 +99,16 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ id
               {asset.assignments.map((a) => <p key={a.id}>{a.user.name} · {new Date(a.assignedAt).toLocaleDateString()} {a.returnedAt ? `(returned ${new Date(a.returnedAt).toLocaleDateString()})` : "(current)"}</p>)}
               {asset.assignments.length === 0 && <p className="text-muted-foreground">Never assigned.</p>}
             </CardContent></Card>
+          <AssetOps
+            assetId={asset.id}
+            currentStatus={asset.status}
+            assignedUserId={asset.assignedUserId}
+            canUpdate={canUpdate}
+            canAssign={canAssign}
+            showRetire={canRetire}
+            showDispose={canDispose}
+            users={users.map((u) => ({ id: u.id, name: u.name ?? u.email ?? "Unknown" }))}
+          />
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ticketCreateSchema, type TicketCreateInput } from "@/lib/validations";
@@ -9,10 +9,25 @@ import { createTicket } from "@/actions/tickets";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea, Label } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
-export function NewTicketForm() {
+function NewTicketFormInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const assetId = searchParams.get("assetId");
   const [error, setError] = useState<string | null>(null);
+  const [linkedAsset, setLinkedAsset] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!assetId) return;
+    fetch(`/api/public/assets/${assetId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        const a = j?.data;
+        if (a) setLinkedAsset(`${a.assetTag} · ${a.name}`);
+      })
+      .catch(() => undefined);
+  }, [assetId]);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<TicketCreateInput>({
     resolver: zodResolver(ticketCreateSchema),
     defaultValues: { impact: "MEDIUM", urgency: "MEDIUM", type: "INCIDENT", category: "Hardware" },
@@ -29,13 +44,19 @@ export function NewTicketForm() {
           onSubmit={handleSubmit(async (v) => {
             setError(null);
             try {
-              const r = await createTicket(v);
+              const r = await createTicket(assetId ? { ...v, assetId } : v);
               router.push(`/tickets/${r.id}`);
             } catch (e) {
               setError(e instanceof Error ? e.message : "Failed to create ticket");
             }
           })}
         >
+          {assetId && (
+            <div className="flex items-center gap-2 rounded-lg border border-[#0D9488]/30 bg-teal-50 p-3 text-sm dark:bg-teal-950/30">
+              <span className="text-muted-foreground">Linked asset:</span>
+              <Badge variant="secondary">{linkedAsset ?? "loading…"}</Badge>
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label>Title</Label>
             <Input {...register("title")} placeholder="e.g. Laptop won't boot after update" />
@@ -97,5 +118,13 @@ export function NewTicketForm() {
         </form>
       </CardContent>
     </Card>
+  );
+}
+
+export function NewTicketForm() {
+  return (
+    <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+      <NewTicketFormInner />
+    </Suspense>
   );
 }

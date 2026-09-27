@@ -81,9 +81,9 @@ function Group({
 
 const ic = "size-4";
 
-export function Sidebar({ counts }: { counts?: { unassigned?: number; slaRisk?: number } }) {
+export function Sidebar({ counts, className }: { counts?: { unassigned?: number; slaRisk?: number }; className?: string }) {
   return (
-    <aside className="hidden w-64 shrink-0 flex-col bg-[#1E3A5F] lg:flex dark:bg-[#0F1D33]">
+    <aside className={cn("hidden w-64 shrink-0 flex-col bg-[#1E3A5F] lg:flex dark:bg-[#0F1D33]", className)}>
       <div className="flex h-16 items-center gap-2.5 border-b border-white/10 px-5">
         <div className="flex size-9 items-center justify-center rounded-lg bg-[#0D9488] font-bold text-white">
           IT
