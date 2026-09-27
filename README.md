@@ -14,6 +14,7 @@ Production-ready Full-Stack Web Application — ศูนย์กลาง IT S
 ## Quickstart
 
 > มือใหม่ / คนจะโคลนไปรันทดสอบ: อ่าน `GETTING_STARTED.md` (คู่มือทีละขั้นภาษาไทย)
+> สถานะงานล่าสุด: ดูที่ `STATUS.md`
 
 ```bash
 cp .env.example .env        # fill DATABASE_URL, AUTH_SECRET
