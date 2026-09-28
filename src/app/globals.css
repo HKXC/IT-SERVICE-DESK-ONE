@@ -4,19 +4,19 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
+    --background: 210 20% 98%; /* #F7F8FA */
     --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
+    --card: 0 0% 100%; /* #FFFFFF */
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 212 52% 25%;
+    --primary: 212 52% 25%; /* #1E3A5F */
     --primary-foreground: 0 0% 100%;
     --secondary: 210 20% 96%;
     --secondary-foreground: 222 47% 11%;
     --muted: 210 20% 96%;
     --muted-foreground: 215 16% 47%;
-    --accent: 174 72% 31%;
+    --accent: 174 72% 31%; /* #0D9488 */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -26,9 +26,9 @@
     --radius: 0.625rem;
   }
   .dark {
-    --background: 222 47% 7%;
+    --background: 222 47% 7%; /* #0B1220 */
     --foreground: 210 40% 98%;
-    --card: 217 33% 11%;
+    --card: 217 33% 11%; /* #111A2B */
     --card-foreground: 210 40% 98%;
     --popover: 217 33% 11%;
     --popover-foreground: 210 40% 98%;
@@ -52,8 +52,20 @@
   * {
     @apply border-border;
   }
+  html {
+    color-scheme: light dark;
+  }
   body {
     @apply bg-background text-foreground antialiased;
     font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   }
+}
+
+/* Custom UI Polish Utility Classes for White SaaS Standard */
+.ui-card-clean {
+  @apply rounded-xl border border-slate-200/80 bg-white shadow-xs transition-all duration-200 hover:shadow-md dark:border-slate-800 dark:bg-[#111A2B];
+}
+
+.ui-table-header {
+  @apply bg-slate-50/70 text-xs font-semibold uppercase tracking-wider text-slate-600 dark:bg-slate-900/80 dark:text-slate-400;
 }
