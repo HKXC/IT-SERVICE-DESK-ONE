@@ -42,32 +42,31 @@ function Group({
   return (
     <div className="px-3 py-1">
       <button
-        type="button"
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center justify-between px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200"
       >
         {title}
-        <ChevronDown className={cn("size-3.5 transition-transform duration-200", !open && "-rotate-90")} />
+        <ChevronDown className={cn("size-3.5 transition-transform", !open && "-rotate-90")} />
       </button>
       {open && (
         <nav className="mt-0.5 space-y-0.5">
           {items.map((it) => {
-            const active = pathname === it.href || (it.href !== "/" && pathname.startsWith(it.href + "/"));
+            const active = pathname === it.href || pathname.startsWith(it.href + "/");
             return (
               <Link
                 key={it.href}
                 href={it.href}
                 className={cn(
-                  "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-all duration-150",
+                  "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors",
                   active
-                    ? "bg-[#0D9488]/20 font-semibold text-white shadow-xs"
+                    ? "bg-[#0D9488]/15 text-white"
                     : "text-slate-300/90 hover:bg-white/5 hover:text-white"
                 )}
               >
                 <span className={cn(active ? "text-[#2DD4BF]" : "text-slate-400")}>{it.icon}</span>
                 <span className="flex-1 truncate">{it.label}</span>
                 {it.badge && (
-                  <span className="rounded-full bg-red-500/90 px-1.5 py-0.5 text-[10px] font-bold text-white shadow-xs">
+                  <span className="rounded-full bg-red-500/90 px-1.5 py-0.5 text-[10px] font-bold text-white">
                     {it.badge}
                   </span>
                 )}
@@ -83,13 +82,10 @@ function Group({
 const ic = "size-4";
 
 export function Sidebar({ counts, className }: { counts?: { unassigned?: number; slaRisk?: number }; className?: string }) {
-  const pathname = usePathname();
-  const isDashboardActive = pathname === "/";
-
   return (
     <aside className={cn("hidden w-64 shrink-0 flex-col bg-[#1E3A5F] lg:flex dark:bg-[#0F1D33]", className)}>
       <div className="flex h-16 items-center gap-2.5 border-b border-white/10 px-5">
-        <div className="flex size-9 items-center justify-center rounded-lg bg-[#0D9488] font-bold text-white shadow-sm">
+        <div className="flex size-9 items-center justify-center rounded-lg bg-[#0D9488] font-bold text-white">
           IT
         </div>
         <div className="leading-tight">
@@ -101,14 +97,9 @@ export function Sidebar({ counts, className }: { counts?: { unassigned?: number;
         <div className="px-3 py-1">
           <Link
             href="/"
-            className={cn(
-              "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-all duration-150",
-              isDashboardActive
-                ? "bg-[#0D9488]/20 font-semibold text-white shadow-xs"
-                : "text-slate-300/90 hover:bg-white/5 hover:text-white"
-            )}
+            className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-slate-200 hover:bg-white/5"
           >
-            <LayoutDashboard className={cn(ic, isDashboardActive ? "text-[#2DD4BF]" : "text-slate-400")} /> Dashboard
+            <LayoutDashboard className={ic} /> Dashboard
           </Link>
         </div>
         <Group
