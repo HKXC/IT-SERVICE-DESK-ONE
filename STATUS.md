@@ -60,9 +60,8 @@
 
 | ชุดทดสอบ | ผล |
 |---|---|
-| `tsc --noEmit` strict (ไม่มี `any`) | 0 errors |
-| `next build` production | ผ่าน (26 routes) |
-| API E2E (attachments + notifications) | 26/26 Pass |
-| Browser E2E (Chrome จริง 17 เคส) | 16/17 Pass — ตก 1 ข้อคือ wait redirect หลังสร้าง KB (บทความถูกสร้าง+มองเห็น+ลบได้จริง เป็นที่ timing ของเทส ไม่ใช่บั๊กแอป) |
-| TODO/FIXME ในโค้ด | 1 จุด (ส่งอีเมล reset — พักไว้ตามคำสั่ง) |
-| ข้อมูลทดสอบค้างใน DB/S3 | 0 (ลบเกลี้ยงทุกครั้ง) |
+| `tsc --noEmit` strict (ไม่มี `any`) | 0 errors (ตรวจซ้ำ 2026-09-28, branch `ui/ux-enhance`) |
+| `next build` production | ผ่าน (33 routes — เพิ่มจาก 26 หลังรวม theme switcher) |
+| `/api/health` บน `next start` | `{"ok":true}` เขียว |
+| Test files ใน repo | ไม่มี (`scripts/`/`tests/`/`e2e/` ถูกลบไปแล้ว — E2E เดิม 26/26 + Browser 16/17 อ้างอิงผลรอบก่อน) |
+| TODO/FIXME ในโค้ด | 1 จุด (`src/actions/auth.ts:46` ส่งอีเมล reset — พักไว้ตามคำสั่ง) |
