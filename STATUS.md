@@ -61,7 +61,7 @@
 | ชุดทดสอบ | ผล |
 |---|---|
 | `tsc --noEmit` strict (ไม่มี `any`) | 0 errors (ตรวจซ้ำ 2026-09-28, branch `ui/ux-enhance`) |
-| `next build` production | ผ่าน (33 routes — เพิ่มจาก 26 หลังรวม theme switcher) |
+| `next build` production | ผ่าน (33 routes) |
 | `/api/health` บน `next start` | `{"ok":true}` เขียว |
 | Test files ใน repo | ไม่มี (`scripts/`/`tests/`/`e2e/` ถูกลบไปแล้ว — E2E เดิม 26/26 + Browser 16/17 อ้างอิงผลรอบก่อน) |
 | TODO/FIXME ในโค้ด | 1 จุด (`src/actions/auth.ts:46` ส่งอีเมล reset — พักไว้ตามคำสั่ง) |
