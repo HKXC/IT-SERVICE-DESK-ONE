@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { Button } from "@/components/ui/button";
+import { usePathname } from "next/navigation";
 
 export function DashboardShell({
   userName,
@@ -16,6 +17,18 @@ export function DashboardShell({
   children: React.ReactNode;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
+
+  useEffect(() => setMenuOpen(false), [pathname]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [menuOpen]);
 
   // lock body scroll while the drawer is open
   useEffect(() => {

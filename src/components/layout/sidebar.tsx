@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   LayoutDashboard,
   Ticket,
@@ -38,6 +38,7 @@ function Group({
   defaultOpen?: boolean;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="px-3 py-1">
@@ -51,11 +52,17 @@ function Group({
       {open && (
         <nav className="mt-0.5 space-y-0.5">
           {items.map((it) => {
-            const active = pathname === it.href || pathname.startsWith(it.href + "/");
+            const [itemPath, itemQuery] = it.href.split("?");
+            const itemParams = new URLSearchParams(itemQuery ?? "");
+            const active = itemQuery
+              ? pathname === itemPath && [...itemParams].every(([key, value]) => searchParams.get(key) === value)
+              : (pathname === itemPath && !searchParams.has("filter") && !searchParams.has("type")) ||
+                (itemPath !== "/tickets" && pathname.startsWith(itemPath + "/"));
             return (
               <Link
                 key={it.href}
                 href={it.href}
+                aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors",
                   active
@@ -82,6 +89,7 @@ function Group({
 const ic = "size-4";
 
 export function Sidebar({ counts, className }: { counts?: { unassigned?: number; slaRisk?: number }; className?: string }) {
+  const pathname = usePathname();
   return (
     <aside className={cn("hidden w-64 shrink-0 flex-col bg-[#1E3A5F] lg:flex dark:bg-[#0F1D33]", className)}>
       <div className="flex h-16 items-center gap-2.5 border-b border-white/10 px-5">
@@ -97,7 +105,8 @@ export function Sidebar({ counts, className }: { counts?: { unassigned?: number;
         <div className="px-3 py-1">
           <Link
             href="/"
-            className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-slate-200 hover:bg-white/5"
+            aria-current={pathname === "/" ? "page" : undefined}
+            className={cn("flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-slate-200 hover:bg-white/5", pathname === "/" && "bg-[#0D9488]/15 text-white")}
           >
             <LayoutDashboard className={ic} /> Dashboard
           </Link>

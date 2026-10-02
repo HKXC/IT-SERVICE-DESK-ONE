@@ -5,6 +5,7 @@ import { PriorityBadge, Badge } from "@/components/ui/badge";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { TicketStatusChart, PriorityChart } from "@/components/dashboard/charts";
+import { ArrowRight, CheckCircle2, CircleAlert, Clock3, Monitor, PackageX, Ticket, Wrench } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -59,48 +60,77 @@ export default async function DashboardPage() {
   ]);
 
   const stats = [
-    { label: "Open Tickets", value: openTickets, href: "/tickets" },
-    { label: "Unassigned", value: unassigned, href: "/tickets?filter=unassigned" },
-    { label: "SLA At Risk", value: slaRisk, href: "/tickets?filter=sla-risk" },
-    { label: "Resolved Today", value: resolvedToday, href: "/tickets" },
-    { label: "Total Assets", value: totalAssets, href: "/assets" },
-    { label: "Assets in Repair", value: assetsRepair, href: "/assets" },
-    { label: "Low Stock Items", value: lowStock, href: "/inventory" },
-    { label: "Licenses Expiring (30d)", value: licensesExpiring, href: "/software" },
+    { label: "Open tickets", value: openTickets, href: "/tickets", icon: Ticket, tone: "text-[#1E3A5F] dark:text-sky-300", hint: "View ticket queue" },
+    { label: "Unassigned", value: unassigned, href: "/tickets?filter=unassigned", icon: CircleAlert, tone: "text-orange-600 dark:text-orange-400", hint: "Needs an owner" },
+    { label: "SLA at risk", value: slaRisk, href: "/tickets?filter=sla-risk", icon: Clock3, tone: "text-rose-600 dark:text-rose-400", hint: "Review deadlines" },
+    { label: "Resolved today", value: resolvedToday, href: "/tickets", icon: CheckCircle2, tone: "text-teal-600 dark:text-teal-400", hint: "Completed work" },
+  ];
+  const resources = [
+    { label: "Total assets", value: totalAssets, href: "/assets", icon: Monitor },
+    { label: "Assets in repair", value: assetsRepair, href: "/assets", icon: Wrench },
+    { label: "Low stock items", value: lowStock, href: "/inventory", icon: PackageX },
+    { label: "Licenses expiring", value: licensesExpiring, href: "/software", icon: Clock3 },
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="mx-auto max-w-7xl space-y-8">
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b pb-6">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-teal-700 dark:text-teal-400">Overview</p>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
             {isTech ? "IT Operations Dashboard" : "My IT Services"}
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="mt-2 text-sm text-muted-foreground">
             Welcome back{me?.name ? `, ${me.name}` : ""} · {me?.role?.name ?? "Employee"}
           </p>
         </div>
         <Link
           href="/tickets/new"
-          className="rounded-lg bg-[#1E3A5F] px-4 py-2 text-sm font-semibold text-white hover:bg-[#16294a]"
+          className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#1E3A5F] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#16294a] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D9488]"
         >
-          + New Ticket
+          New ticket <ArrowRight className="size-4" aria-hidden />
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <section aria-labelledby="ticket-overview-heading" className="space-y-3">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 id="ticket-overview-heading" className="text-base font-semibold">Ticket overview</h2>
+          <Link href="/tickets" className="text-sm font-medium text-teal-700 hover:underline dark:text-teal-400">View all tickets</Link>
+        </div>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((s) => (
-          <Link key={s.label} href={s.href}>
-            <Card className="transition-shadow hover:shadow-md">
-              <CardContent className="p-4">
-                <p className="text-2xl font-bold">{s.value}</p>
-                <p className="text-xs text-muted-foreground">{s.label}</p>
+          <Link key={s.label} href={s.href} className="group rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D9488]">
+            <Card className="h-full transition-all group-hover:-translate-y-0.5 group-hover:border-[#0D9488]/40 group-hover:shadow-md">
+              <CardContent className="p-5">
+                <div className="mb-5 flex items-center justify-between">
+                  <span className={`flex size-10 items-center justify-center rounded-lg bg-muted ${s.tone}`}><s.icon className="size-5" aria-hidden /></span>
+                  <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-1" aria-hidden />
+                </div>
+                <p className="text-3xl font-bold tabular-nums tracking-tight">{s.value}</p>
+                <p className="mt-1 text-sm font-semibold">{s.label}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{s.hint}</p>
               </CardContent>
             </Card>
           </Link>
         ))}
       </div>
+      </section>
 
+      <section aria-labelledby="resources-heading" className="space-y-3">
+        <h2 id="resources-heading" className="text-base font-semibold">Assets and resources</h2>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {resources.map((item) => (
+            <Link key={item.label} href={item.href} className="group flex items-center gap-3 rounded-xl border bg-card p-4 shadow-sm transition-colors hover:border-[#0D9488]/40 hover:bg-muted/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D9488]">
+              <item.icon className="size-5 shrink-0 text-teal-700 dark:text-teal-400" aria-hidden />
+              <div className="min-w-0 flex-1"><p className="text-sm text-muted-foreground">{item.label}</p><p className="text-xl font-semibold tabular-nums">{item.value}</p></div>
+              <ArrowRight className="size-4 text-muted-foreground" aria-hidden />
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section aria-labelledby="trends-heading" className="space-y-3">
+        <h2 id="trends-heading" className="text-base font-semibold">Ticket breakdown</h2>
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -129,6 +159,7 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+      </section>
     </div>
   );
 }
