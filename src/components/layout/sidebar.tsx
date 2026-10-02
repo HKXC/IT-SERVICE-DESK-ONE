@@ -91,7 +91,7 @@ const ic = "size-4";
 export function Sidebar({ counts, className }: { counts?: { unassigned?: number; slaRisk?: number }; className?: string }) {
   const pathname = usePathname();
   return (
-    <aside className={cn("hidden w-64 shrink-0 flex-col border-r border-white/10 bg-[#101614] lg:flex", className)}>
+    <aside className={cn("hidden w-64 shrink-0 flex-col border-r border-white/10 bg-[#101614]", className)}>
       <div className="flex h-16 items-center gap-2.5 border-b border-white/10 px-5">
         <div className="flex size-9 items-center justify-center rounded-lg bg-[#a9c395] font-bold text-[#0b1110]">
           IT

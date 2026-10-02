@@ -40,9 +40,8 @@ export function DashboardShell({
 
   return (
     <div className="flex min-h-screen bg-[#f6f7f3] dark:bg-[#080d0c]">
-      <Sidebar counts={counts} />
       {menuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
+        <div className="fixed inset-0 z-50 xl:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
           <div
             className="absolute inset-0 bg-black/50"
             onClick={() => setMenuOpen(false)}

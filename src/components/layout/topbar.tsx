@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { Moon, Sun, Bell, Menu, Search, LogOut, CheckCheck } from "lucide-react";
+import { Moon, Sun, Bell, Menu, Search, LogOut, CheckCheck, Layers3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
+import Link from "next/link";
+import { DesktopNav } from "@/components/layout/desktop-nav";
 
 type Notice = {
   id: string;
@@ -20,6 +22,7 @@ export function Topbar({ userName, onMenu }: { userName?: string | null; onMenu?
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const [notices, setNotices] = useState<Notice[]>([]);
   const [unread, setUnread] = useState(0);
@@ -33,12 +36,17 @@ export function Topbar({ userName, onMenu }: { userName?: string | null; onMenu?
       const tag = (e.target as HTMLElement)?.tagName;
       if (e.key === "/" && tag !== "INPUT" && tag !== "TEXTAREA") {
         e.preventDefault();
-        searchRef.current?.focus();
+        setSearchOpen(true);
       }
+      if (e.key === "Escape") setSearchOpen(false);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  useEffect(() => {
+    if (searchOpen) searchRef.current?.focus();
+  }, [searchOpen]);
 
   // close dropdown on outside click
   useEffect(() => {
@@ -80,19 +88,25 @@ export function Topbar({ userName, onMenu }: { userName?: string | null; onMenu?
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur-xl lg:px-8">
-      <Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenu} aria-label="Open navigation menu">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur-xl xl:px-8">
+      <Button variant="ghost" size="icon" className="xl:hidden" onClick={onMenu} aria-label="Open navigation menu">
         <Menu />
       </Button>
+      <Link href="/" className="flex shrink-0 items-center gap-2.5 text-sm font-semibold tracking-tight text-foreground" aria-label="IT Service Desk dashboard">
+        <span className="flex size-8 items-center justify-center rounded-lg bg-[#a9c395] text-[#0b1110]"><Layers3 className="size-4" aria-hidden /></span>
+        <span className="hidden sm:inline">IT Service Desk<span className="text-[#a9c395]">.</span></span>
+      </Link>
+      <div className="mx-auto hidden xl:block"><DesktopNav /></div>
       <form
-        className="relative hidden max-w-sm flex-1 md:block"
+        className={`absolute right-4 top-[calc(100%+0.5rem)] z-50 w-[min(24rem,calc(100vw-2rem))] rounded-xl border bg-card p-2 shadow-xl ${searchOpen ? "block" : "hidden"}`}
         role="search"
         onSubmit={(e) => {
           e.preventDefault();
+          setSearchOpen(false);
           router.push(`/tickets?q=${encodeURIComponent(query.trim())}`);
         }}
       >
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+        <Search className="absolute left-5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
         <input
           ref={searchRef}
           value={query}
@@ -103,6 +117,9 @@ export function Topbar({ userName, onMenu }: { userName?: string | null; onMenu?
         />
       </form>
       <div className="ml-auto flex items-center gap-1.5">
+        <Button variant="ghost" size="icon" aria-label="Search tickets" aria-expanded={searchOpen} onClick={() => setSearchOpen((value) => !value)}>
+          <Search />
+        </Button>
         <div className="relative" ref={boxRef}>
           <Button
             variant="ghost"
