@@ -80,7 +80,7 @@ export function Topbar({ userName, onMenu }: { userName?: string | null; onMenu?
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur lg:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur-xl lg:px-8">
       <Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenu} aria-label="Open navigation menu">
         <Menu />
       </Button>
@@ -99,7 +99,7 @@ export function Topbar({ userName, onMenu }: { userName?: string | null; onMenu?
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search tickets…  ( / )"
           aria-label="Search tickets"
-          className="h-9 w-full rounded-lg border border-input bg-muted/50 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+          className="h-10 w-full rounded-lg border border-input bg-muted/40 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
         />
       </form>
       <div className="ml-auto flex items-center gap-1.5">
@@ -129,7 +129,7 @@ export function Topbar({ userName, onMenu }: { userName?: string | null; onMenu?
                 {unread > 0 && (
                   <button
                     onClick={() => void markAllRead()}
-                    className="flex items-center gap-1 text-xs text-[#0D9488] hover:underline"
+                    className="flex items-center gap-1 text-xs text-[#a9c395] hover:underline"
                   >
                     <CheckCheck className="size-3.5" aria-hidden /> Mark all read
                   </button>

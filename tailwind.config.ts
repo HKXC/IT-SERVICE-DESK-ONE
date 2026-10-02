@@ -17,12 +17,12 @@ const config: Config = {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         brand: {
-          DEFAULT: "#1E3A5F",
-          foreground: "#FFFFFF",
+          DEFAULT: "#A9C395",
+          foreground: "#0B1110",
         },
         accent2: {
-          DEFAULT: "#0D9488",
-          foreground: "#FFFFFF",
+          DEFAULT: "#A9C395",
+          foreground: "#0B1110",
         },
         primary: {
           DEFAULT: "hsl(var(--primary))",

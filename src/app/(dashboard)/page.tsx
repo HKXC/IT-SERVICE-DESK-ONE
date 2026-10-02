@@ -60,10 +60,10 @@ export default async function DashboardPage() {
   ]);
 
   const stats = [
-    { label: "Open tickets", value: openTickets, href: "/tickets", icon: Ticket, tone: "text-[#1E3A5F] dark:text-sky-300", hint: "View ticket queue" },
-    { label: "Unassigned", value: unassigned, href: "/tickets?filter=unassigned", icon: CircleAlert, tone: "text-orange-600 dark:text-orange-400", hint: "Needs an owner" },
-    { label: "SLA at risk", value: slaRisk, href: "/tickets?filter=sla-risk", icon: Clock3, tone: "text-rose-600 dark:text-rose-400", hint: "Review deadlines" },
-    { label: "Resolved today", value: resolvedToday, href: "/tickets", icon: CheckCircle2, tone: "text-teal-600 dark:text-teal-400", hint: "Completed work" },
+    { label: "Open tickets", value: openTickets, href: "/tickets", icon: Ticket, tone: "text-[#a9c395]", hint: "View ticket queue" },
+    { label: "Unassigned", value: unassigned, href: "/tickets?filter=unassigned", icon: CircleAlert, tone: "text-orange-500 dark:text-orange-300", hint: "Needs an owner" },
+    { label: "SLA at risk", value: slaRisk, href: "/tickets?filter=sla-risk", icon: Clock3, tone: "text-rose-500 dark:text-rose-300", hint: "Review deadlines" },
+    { label: "Resolved today", value: resolvedToday, href: "/tickets", icon: CheckCircle2, tone: "text-[#a9c395]", hint: "Completed work" },
   ];
   const resources = [
     { label: "Total assets", value: totalAssets, href: "/assets", icon: Monitor },
@@ -74,33 +74,36 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
-      <div className="flex flex-wrap items-start justify-between gap-4 border-b pb-6">
+      <div className="relative overflow-hidden rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_90%_0%,rgba(169,195,149,0.12),transparent_52%)]" />
+        <div className="relative flex flex-wrap items-start justify-between gap-5">
         <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-teal-700 dark:text-teal-400">Overview</p>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-green-700 dark:text-[#a9c395]">Your workspace / Overview</p>
+          <h1 className="text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">
             {isTech ? "IT Operations Dashboard" : "My IT Services"}
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-3 text-sm text-muted-foreground">
             Welcome back{me?.name ? `, ${me.name}` : ""} · {me?.role?.name ?? "Employee"}
           </p>
         </div>
         <Link
           href="/tickets/new"
-          className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#1E3A5F] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#16294a] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D9488]"
+          className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#a9c395] px-4 py-2 text-sm font-semibold text-[#0b1110] shadow-sm transition-colors hover:bg-[#bdd5aa] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a9c395]"
         >
           New ticket <ArrowRight className="size-4" aria-hidden />
         </Link>
+        </div>
       </div>
 
       <section aria-labelledby="ticket-overview-heading" className="space-y-3">
         <div className="flex items-baseline justify-between gap-3">
           <h2 id="ticket-overview-heading" className="text-base font-semibold">Ticket overview</h2>
-          <Link href="/tickets" className="text-sm font-medium text-teal-700 hover:underline dark:text-teal-400">View all tickets</Link>
+          <Link href="/tickets" className="text-sm font-medium text-green-700 hover:underline dark:text-[#a9c395]">View all tickets</Link>
         </div>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((s) => (
-          <Link key={s.label} href={s.href} className="group rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D9488]">
-            <Card className="h-full transition-all group-hover:-translate-y-0.5 group-hover:border-[#0D9488]/40 group-hover:shadow-md">
+          <Link key={s.label} href={s.href} className="group rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a9c395]">
+            <Card className="h-full transition-all group-hover:-translate-y-0.5 group-hover:border-[#a9c395]/40 group-hover:shadow-md">
               <CardContent className="p-5">
                 <div className="mb-5 flex items-center justify-between">
                   <span className={`flex size-10 items-center justify-center rounded-lg bg-muted ${s.tone}`}><s.icon className="size-5" aria-hidden /></span>
@@ -120,8 +123,8 @@ export default async function DashboardPage() {
         <h2 id="resources-heading" className="text-base font-semibold">Assets and resources</h2>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {resources.map((item) => (
-            <Link key={item.label} href={item.href} className="group flex items-center gap-3 rounded-xl border bg-card p-4 shadow-sm transition-colors hover:border-[#0D9488]/40 hover:bg-muted/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D9488]">
-              <item.icon className="size-5 shrink-0 text-teal-700 dark:text-teal-400" aria-hidden />
+            <Link key={item.label} href={item.href} className="group flex items-center gap-3 rounded-xl border bg-card p-4 shadow-sm transition-colors hover:border-[#a9c395]/40 hover:bg-muted/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a9c395]">
+              <item.icon className="size-5 shrink-0 text-green-700 dark:text-[#a9c395]" aria-hidden />
               <div className="min-w-0 flex-1"><p className="text-sm text-muted-foreground">{item.label}</p><p className="text-xl font-semibold tabular-nums">{item.value}</p></div>
               <ArrowRight className="size-4 text-muted-foreground" aria-hidden />
             </Link>

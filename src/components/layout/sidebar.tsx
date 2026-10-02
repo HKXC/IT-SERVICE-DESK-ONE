@@ -44,7 +44,7 @@ function Group({
     <div className="px-3 py-1">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200"
+        className="flex w-full items-center justify-between px-2 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500 hover:text-[#a9c395]"
       >
         {title}
         <ChevronDown className={cn("size-3.5 transition-transform", !open && "-rotate-90")} />
@@ -66,11 +66,11 @@ function Group({
                 className={cn(
                   "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors",
                   active
-                    ? "bg-[#0D9488]/15 text-white"
-                    : "text-slate-300/90 hover:bg-white/5 hover:text-white"
+                    ? "bg-[#a9c395]/15 text-[#c5d9b8]"
+                    : "text-zinc-400 hover:bg-white/5 hover:text-white"
                 )}
               >
-                <span className={cn(active ? "text-[#2DD4BF]" : "text-slate-400")}>{it.icon}</span>
+                <span className={cn(active ? "text-[#a9c395]" : "text-zinc-500")}>{it.icon}</span>
                 <span className="flex-1 truncate">{it.label}</span>
                 {it.badge && (
                   <span className="rounded-full bg-red-500/90 px-1.5 py-0.5 text-[10px] font-bold text-white">
@@ -91,14 +91,14 @@ const ic = "size-4";
 export function Sidebar({ counts, className }: { counts?: { unassigned?: number; slaRisk?: number }; className?: string }) {
   const pathname = usePathname();
   return (
-    <aside className={cn("hidden w-64 shrink-0 flex-col bg-[#1E3A5F] lg:flex dark:bg-[#0F1D33]", className)}>
+    <aside className={cn("hidden w-64 shrink-0 flex-col border-r border-white/10 bg-[#101614] lg:flex", className)}>
       <div className="flex h-16 items-center gap-2.5 border-b border-white/10 px-5">
-        <div className="flex size-9 items-center justify-center rounded-lg bg-[#0D9488] font-bold text-white">
+        <div className="flex size-9 items-center justify-center rounded-lg bg-[#a9c395] font-bold text-[#0b1110]">
           IT
         </div>
         <div className="leading-tight">
           <p className="text-sm font-bold text-white">IT Service Desk</p>
-          <p className="text-[11px] text-slate-400">Asset Management</p>
+          <p className="text-[11px] text-zinc-500">Asset Management</p>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto py-2">
@@ -106,7 +106,7 @@ export function Sidebar({ counts, className }: { counts?: { unassigned?: number;
           <Link
             href="/"
             aria-current={pathname === "/" ? "page" : undefined}
-            className={cn("flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-slate-200 hover:bg-white/5", pathname === "/" && "bg-[#0D9488]/15 text-white")}
+            className={cn("flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-zinc-400 hover:bg-white/5 hover:text-white", pathname === "/" && "bg-[#a9c395]/15 text-[#c5d9b8]")}
           >
             <LayoutDashboard className={ic} /> Dashboard
           </Link>
@@ -172,8 +172,8 @@ export function Sidebar({ counts, className }: { counts?: { unassigned?: number;
           ]}
         />
       </div>
-      <div className="border-t border-white/10 p-4 text-[11px] text-slate-400">
-        v1.0.0 · Production-ready
+      <div className="border-t border-white/10 p-4 text-[11px] text-zinc-500">
+        IT Service Desk · Workspace
       </div>
     </aside>
   );

@@ -39,7 +39,7 @@ export function DashboardShell({
   }, [menuOpen]);
 
   return (
-    <div className="flex min-h-screen bg-[#F7F8FA] dark:bg-[#0B1220]">
+    <div className="flex min-h-screen bg-[#f6f7f3] dark:bg-[#080d0c]">
       <Sidebar counts={counts} />
       {menuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
@@ -67,7 +67,7 @@ export function DashboardShell({
       )}
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar userName={userName} onMenu={() => setMenuOpen(true)} />
-        <main className="flex-1 p-4 lg:p-6">{children}</main>
+        <main className="flex-1 p-4 lg:p-8">{children}</main>
       </div>
     </div>
   );
