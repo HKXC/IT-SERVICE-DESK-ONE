@@ -1,4 +1,4 @@
-# วิธีเปิดโปรเจกต์และรันทดสอบ (Getting Started — Table Edition)
+<!-- # วิธีเปิดโปรเจกต์และรันทดสอบ (Getting Started — Table Edition)
 
 > อ่านตารางจากบนลงล่าง ทำตามคอลัมน์ซ้ายไปขวา | ภาพรวมระบบดูที่ `README.md`
 
@@ -117,4 +117,4 @@
 | ใส่ข้อมูลตัวอย่าง | `npm run db:seed` |
 | รันโหมด dev | `npm run dev` |
 | รันโหมด production | `npm run build` แล้ว `npm run start` |
-| เปิดเว็บ | `http://localhost:3000` |
+| เปิดเว็บ | `http://localhost:3000` | -->
