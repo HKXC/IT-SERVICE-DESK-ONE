@@ -31,7 +31,13 @@ export default async function AssetsPage({
     db.asset.count({ where: where as never }),
     db.asset.findMany({
       where: where as never,
-      include: { department: true, location: true },
+      include: {
+        assignments: {
+          where: { returnedAt: null },
+          take: 1,
+          include: { user: { select: { name: true } } },
+        },
+      },
       orderBy: { updatedAt: "desc" },
       take: 100,
     }),
@@ -55,22 +61,37 @@ export default async function AssetsPage({
       </form>
       <Card>
         <CardContent className="overflow-x-auto p-0">
-          <table className="w-full min-w-[820px] text-sm">
+          <table className="w-full min-w-[720px] text-sm">
             <thead className="border-b bg-muted/50 text-left text-xs uppercase text-muted-foreground">
-              <tr><th className="px-4 py-2.5">Tag</th><th className="px-4 py-2.5">Name</th><th className="px-4 py-2.5">Type</th><th className="px-4 py-2.5">Status</th><th className="px-4 py-2.5">Dept</th><th className="px-4 py-2.5">Warranty</th></tr>
+              <tr>
+                <th className="px-4 py-2.5">Asset No.</th>
+                <th className="px-4 py-2.5">Name</th>
+                <th className="px-4 py-2.5">Type</th>
+                <th className="px-4 py-2.5">Serial</th>
+                <th className="px-4 py-2.5">Status</th>
+                <th className="px-4 py-2.5">Responsible</th>
+              </tr>
             </thead>
             <tbody>
               {assets.map((a) => (
                 <tr key={a.id} className="border-b last:border-0 hover:bg-muted/40">
-                  <td className="px-4 py-2.5 font-mono text-xs"><Link className="text-[#0D9488] hover:underline" href={`/assets/${a.id}`}>{a.assetTag}</Link></td>
+                  <td className="px-4 py-2.5 font-mono text-xs">
+                    <Link className="text-[#0D9488] hover:underline" href={`/assets/${a.id}`}>{a.assetTag}</Link>
+                  </td>
                   <td className="px-4 py-2.5">{a.name}</td>
                   <td className="px-4 py-2.5">{a.type}</td>
+                  <td className="px-4 py-2.5">{a.serialNumber ?? "—"}</td>
                   <td className="px-4 py-2.5"><Badge variant="secondary">{a.status.replaceAll("_", " ")}</Badge></td>
-                  <td className="px-4 py-2.5">{a.department?.name ?? "—"}</td>
-                  <td className="px-4 py-2.5">{a.warrantyEnd ? new Date(a.warrantyEnd).toLocaleDateString() : "—"}</td>
+                  <td className="px-4 py-2.5">{a.assignments[0]?.user.name ?? "—"}</td>
                 </tr>
               ))}
-              {assets.length === 0 && <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">No assets. Create the first one.</td></tr>}
+              {assets.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                    No assets match.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </CardContent>

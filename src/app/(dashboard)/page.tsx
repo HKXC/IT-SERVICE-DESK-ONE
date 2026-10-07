@@ -5,7 +5,7 @@ import { PriorityBadge, Badge } from "@/components/ui/badge";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { TicketStatusChart, PriorityChart } from "@/components/dashboard/charts";
-import { ArrowRight, CheckCircle2, CircleAlert, Clock3, Monitor, PackageX, Ticket, Wrench } from "lucide-react";
+import { ArrowRight, CheckCircle2, CircleAlert, Clock3, Monitor, Ticket, Wrench } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,7 @@ export default async function DashboardPage() {
     where: { id: meId },
     include: { role: true },
   });
-  const isTech = !!me?.role && me.role.name !== "Employee";
+  const isTech = !!me?.role && me.role.name !== "User";
 
   const baseFilter = isTech ? {} : { requesterId: meId };
   const openFilter = { ...baseFilter, status: { notIn: ["CLOSED", "RESOLVED"] as never[] } };
@@ -30,8 +30,6 @@ export default async function DashboardPage() {
     resolvedToday,
     totalAssets,
     assetsRepair,
-    lowStock,
-    licensesExpiring,
     byStatus,
     byPriority,
   ] = await Promise.all([
@@ -51,10 +49,6 @@ export default async function DashboardPage() {
     }),
     db.asset.count(),
     db.asset.count({ where: { status: "REPAIR" } }),
-    db.inventoryItem.count({ where: { quantity: { lte: 5 } } }),
-    db.license.count({
-      where: { expiryDate: { lt: new Date(Date.now() + 30 * 86400 * 1000) } },
-    }),
     db.ticket.groupBy({ by: ["status"], _count: true, where: baseFilter as never }),
     db.ticket.groupBy({ by: ["priority"], _count: true, where: baseFilter as never }),
   ]);
@@ -68,8 +62,6 @@ export default async function DashboardPage() {
   const resources = [
     { label: "Total assets", value: totalAssets, href: "/assets", icon: Monitor },
     { label: "Assets in repair", value: assetsRepair, href: "/assets", icon: Wrench },
-    { label: "Low stock items", value: lowStock, href: "/inventory", icon: PackageX },
-    { label: "Licenses expiring", value: licensesExpiring, href: "/software", icon: Clock3 },
   ];
 
   return (
@@ -103,7 +95,7 @@ export default async function DashboardPage() {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((s) => (
           <Link key={s.label} href={s.href} className="group rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a9c395]">
-            <Card className="h-full transition-all group-hover:-translate-y-0.5 group-hover:border-[#a9c395]/40 group-hover:shadow-md">
+            <Card className="card-motion h-full transition-all group-hover:-translate-y-0.5 group-hover:border-[#a9c395]/40 group-hover:shadow-md">
               <CardContent className="p-5">
                 <div className="mb-5 flex items-center justify-between">
                   <span className={`flex size-10 items-center justify-center rounded-lg bg-muted ${s.tone}`}><s.icon className="size-5" aria-hidden /></span>
@@ -123,7 +115,7 @@ export default async function DashboardPage() {
         <h2 id="resources-heading" className="text-base font-semibold">Assets and resources</h2>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {resources.map((item) => (
-            <Link key={item.label} href={item.href} className="group flex items-center gap-3 rounded-xl border bg-card p-4 shadow-sm transition-colors hover:border-[#a9c395]/40 hover:bg-muted/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a9c395]">
+            <Link key={item.label} href={item.href} className="card-motion group flex items-center gap-3 rounded-xl border bg-card p-4 shadow-sm transition-colors hover:border-[#a9c395]/40 hover:bg-muted/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a9c395]">
               <item.icon className="size-5 shrink-0 text-green-700 dark:text-[#a9c395]" aria-hidden />
               <div className="min-w-0 flex-1"><p className="text-sm text-muted-foreground">{item.label}</p><p className="text-xl font-semibold tabular-nums">{item.value}</p></div>
               <ArrowRight className="size-4 text-muted-foreground" aria-hidden />

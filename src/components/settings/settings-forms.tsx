@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Trash2 } from "lucide-react";
-import { saveSLAPolicy, savePriorityMatrix, addHoliday, deleteHoliday } from "@/actions/manage";
+import { saveSLAPolicy, addHoliday, deleteHoliday } from "@/actions/manage";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -100,63 +100,6 @@ export function PolicyEditor({ policy }: { policy: PolicyShape }) {
       </div>
       {error && <p className="text-xs text-red-600">{error}</p>}
       {success && <p className="text-xs text-emerald-600">{success}</p>}
-    </form>
-  );
-}
-
-const LEVELS = ["HIGH", "MEDIUM", "LOW"] as const;
-
-export function MatrixEditor({ initial }: { initial: Record<string, string> }) {
-  const { busy, error, success, run } = useAsync();
-  const [matrix, setMatrix] = useState<Record<string, string>>(initial);
-  return (
-    <form
-      className="space-y-3"
-      onSubmit={(e) => {
-        e.preventDefault();
-        void run(() => savePriorityMatrix(matrix), "Priority matrix saved.");
-      }}
-    >
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[420px] text-sm">
-          <thead>
-            <tr className="text-left text-xs uppercase text-muted-foreground">
-              <th className="py-1.5">Impact × Urgency</th>
-              {LEVELS.map((u) => (
-                <th key={u} className="py-1.5">{u}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {LEVELS.map((impact) => (
-              <tr key={impact} className="border-t">
-                <td className="py-1.5 font-medium">{impact}</td>
-                {LEVELS.map((urgency) => {
-                  const k = `${impact}:${urgency}`;
-                  return (
-                    <td key={k} className="py-1.5 pr-2">
-                      <select
-                        value={matrix[k] ?? "P3"}
-                        disabled={busy}
-                        aria-label={`Priority for ${impact} impact, ${urgency} urgency`}
-                        onChange={(e) => setMatrix((m) => ({ ...m, [k]: e.target.value }))}
-                        className="h-8 rounded-md border border-input bg-background px-1.5 text-xs"
-                      >
-                        <option>P1</option><option>P2</option><option>P3</option><option>P4</option>
-                      </select>
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {error && <p className="text-xs text-red-600">{error}</p>}
-      {success && <p className="text-xs text-emerald-600">{success}</p>}
-      <Button size="sm" disabled={busy}>
-        {busy ? <Loader2 className="animate-spin" aria-hidden /> : "Save matrix"}
-      </Button>
     </form>
   );
 }

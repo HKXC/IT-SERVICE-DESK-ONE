@@ -1,7 +1,6 @@
-// IT Service Desk & Asset Management Platform — Prisma Schema
+// IT Helpdesk — Prisma Schema (six-module scope)
 // PostgreSQL · Vercel Postgres compatible
-// Conventions: cuid ids, timestamptz via @db.Timestamptz where needed,
-// every mutation writes AuditLog (enforced in Server Actions, not DB triggers).
+// Modules: Authentication & User · Ticket · Comment & Timeline · Asset · Dashboard · Report
 
 generator client {
   provider = "prisma-client-js"
@@ -42,15 +41,9 @@ model User {
   requestedTickets Ticket[]       @relation("TicketRequester")
   assignedTickets  Ticket[]       @relation("TicketAssignee")
   comments         TicketComment[]
-  workLogs         WorkLog[]
   timelineEvents   TicketTimelineEvent[] @relation("TimelineActor")
   // Asset relations
   assetAssignments AssetAssignment[]
-  licenseAssignments LicenseAssignment[]
-  // Misc
-  auditLogs     AuditLog[]
-  notifications Notification[]
-  kbArticles    KnowledgeArticle[] @relation("KbAuthor")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -105,7 +98,7 @@ model PasswordResetToken {
   @@index([email])
 }
 
-// ─── Org · RBAC ─────────────────────────────────────────────────────────────
+// ─── Org · Roles ────────────────────────────────────────────────────────────
 
 model Department {
   id       String  @id @default(cuid())
@@ -115,7 +108,6 @@ model Department {
   parent   Department?  @relation("DeptHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
   children Department[] @relation("DeptHierarchy")
   users    User[]
-  assets   Asset[]
   tickets  Ticket[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -127,38 +119,20 @@ model Location {
   code     String? @unique
   address  String?
   users    User[]
-  assets   Asset[]
   tickets  Ticket[]
-  inventoryItems InventoryItem[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+// Exactly three roles: User · Technician · Administrator
 model Role {
   id          String  @id @default(cuid())
-  name        String  @unique // Employee, Technician, Team Lead, Asset Officer, IT Manager, Administrator
+  name        String  @unique
   description String?
-  isSystem    Boolean @default(false) // system roles cannot be deleted
+  isSystem    Boolean @default(false)
   users       User[]
-  permissions RolePermission[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-}
-
-model Permission {
-  id          String  @id @default(cuid())
-  key         String  @unique // e.g. ticket.create
-  description String?
-  roles       RolePermission[]
-}
-
-model RolePermission {
-  roleId       String
-  permissionId String
-  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-
-  @@id([roleId, permissionId])
 }
 
 // ─── Tickets ────────────────────────────────────────────────────────────────
@@ -166,44 +140,22 @@ model RolePermission {
 enum TicketType {
   INCIDENT
   SERVICE_REQUEST
-  REPAIR
-  PROBLEM
-  CHANGE_REQUEST
-  ACCESS_REQUEST
 }
 
 enum TicketStatus {
   NEW
-  ACKNOWLEDGED
   ASSIGNED
   IN_PROGRESS
   WAITING_USER
-  WAITING_VENDOR
-  WAITING_PART
-  ON_HOLD
-  ESCALATED
   RESOLVED
-  PENDING_CONFIRMATION
   CLOSED
 }
 
 enum TicketPriority {
-  P1
-  P2
-  P3
-  P4
-}
-
-enum ImpactLevel {
-  HIGH
-  MEDIUM
   LOW
-}
-
-enum UrgencyLevel {
-  HIGH
   MEDIUM
-  LOW
+  HIGH
+  CRITICAL
 }
 
 enum TicketSource {
@@ -215,7 +167,7 @@ enum TicketSource {
 }
 
 model TicketSequence {
-  prefix String // INC | REQ | PRB | CHG | ACC | REP
+  prefix String // INC | REQ
   year   Int
   last   Int    @default(0)
 
@@ -231,9 +183,7 @@ model Ticket {
   type     TicketType
   category String
   subcategory String?
-  priority TicketPriority @default(P3)
-  impact   ImpactLevel    @default(MEDIUM)
-  urgency  UrgencyLevel   @default(MEDIUM)
+  priority TicketPriority @default(MEDIUM)
   status   TicketStatus   @default(NEW)
 
   source TicketSource @default(WEB)
@@ -248,7 +198,6 @@ model Ticket {
 
   assigneeId String?
   assignee   User?   @relation("TicketAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
-  assignedTeam String?
 
   // Asset link
   assetId String?
@@ -267,17 +216,10 @@ model Ticket {
   slaResponseBreached  Boolean   @default(false)
   slaResolutionBreached Boolean  @default(false)
 
-  // Satisfaction
-  satisfactionRating Int? // 1-5
-
   comments    TicketComment[]
-  workLogs    WorkLog[]
   attachments TicketAttachment[]
   timeline    TicketTimelineEvent[]
   pauses      SLAPauseInterval[]
-  relationsFrom TicketRelation[] @relation("RelFrom")
-  relationsTo   TicketRelation[] @relation("RelTo")
-  stockUsage    StockTransaction[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -290,18 +232,6 @@ model Ticket {
   @@index([assetId])
   @@index([createdAt])
   @@index([slaResolutionDueAt])
-}
-
-model TicketRelation {
-  id          String  @id @default(cuid())
-  fromTicketId String
-  fromTicket   Ticket  @relation("RelFrom", fields: [fromTicketId], references: [id], onDelete: Cascade)
-  toTicketId   String
-  toTicket     Ticket  @relation("RelTo", fields: [toTicketId], references: [id], onDelete: Cascade)
-  relationType String  @default("RELATED") // RELATED | DUPLICATE | BLOCKS | CAUSED_BY
-  createdAt    DateTime @default(now())
-
-  @@unique([fromTicketId, toTicketId])
 }
 
 enum CommentType {
@@ -319,24 +249,6 @@ model TicketComment {
   body     String      @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([ticketId])
-}
-
-model WorkLog {
-  id       String @id @default(cuid())
-  ticketId String
-  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  authorId String
-  author   User   @relation(fields: [authorId], references: [id])
-  title    String?
-  body     String @db.Text
-  timeSpentMin Int @default(0)
-  // Parts used on this work log (drives stock decrement)
-  inventoryItemId String?
-  inventoryItem   InventoryItem? @relation(fields: [inventoryItemId], references: [id], onDelete: SetNull)
-  quantityUsed    Int @default(0)
-  createdAt DateTime @default(now())
 
   @@index([ticketId])
 }
@@ -362,7 +274,7 @@ model TicketTimelineEvent {
   ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   actorId  String?
   actor    User?  @relation("TimelineActor", fields: [actorId], references: [id], onDelete: SetNull)
-  event    String // STATUS_CHANGED | COMMENT_ADDED | ASSIGNED | SLA_BREACH | ...
+  event    String // CREATED | ASSIGNED | STATUS_CHANGED | RESOLVED | CLOSED | REOPENED | PRIORITY_CHANGED
   fromStatus TicketStatus?
   toStatus   TicketStatus?
   detail   String? @db.Text
@@ -371,7 +283,7 @@ model TicketTimelineEvent {
   @@index([ticketId])
 }
 
-// ─── SLA ────────────────────────────────────────────────────────────────────
+// ─── SLA (kept) ─────────────────────────────────────────────────────────────
 
 model SLAPolicy {
   id          String  @id @default(cuid())
@@ -388,7 +300,6 @@ model SLAPolicy {
   p3ResolutionMin Int @default(1440)
   p4ResponseMin   Int @default(480)
   p4ResolutionMin Int @default(4320)
-  // Escalation: at-risk threshold % of target elapsed (e.g. 75)
   atRiskPercent Int @default(75)
   businessHoursId String?
   businessHours   BusinessHours? @relation(fields: [businessHoursId], references: [id], onDelete: SetNull)
@@ -401,7 +312,6 @@ model BusinessHours {
   id        String  @id @default(cuid())
   name      String  @unique @default("Default Business Hours")
   timezone  String  @default("Asia/Bangkok")
-  // 0=Sun..6=Sat — JSON arrays of {start,end} "09:00"-"18:00"
   workingDays Json @default("[1,2,3,4,5]")
   startTime   String @default("09:00")
   endTime     String @default("18:00")
@@ -426,28 +336,19 @@ model SLAPauseInterval {
   ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   pausedAt  DateTime @default(now())
   resumedAt DateTime?
-  reason    String? // WAITING_USER | WAITING_VENDOR | WAITING_PART
+  reason    String?
   createdAt DateTime @default(now())
 
   @@index([ticketId])
 }
 
-// ─── Assets ─────────────────────────────────────────────────────────────────
+// ─── Assets (light) ─────────────────────────────────────────────────────────
 
 enum AssetStatus {
-  REQUESTED
-  PURCHASED
-  RECEIVED
   IN_STOCK
   ASSIGNED
-  IN_USE
   REPAIR
-  MAINTENANCE
-  TRANSFER
-  RESERVED
-  LOST
   RETIRED
-  DISPOSED
 }
 
 enum AssetType {
@@ -461,45 +362,17 @@ enum AssetType {
 
 model Asset {
   id         String      @id @default(cuid())
-  assetTag   String      @unique
+  assetTag   String      @unique // Asset Number
   name       String
   type       AssetType   @default(OTHER)
-  category   String?
   status     AssetStatus @default(IN_STOCK)
 
   serialNumber String?
-  manufacturer String?
   brand        String?
   model        String?
 
-  // Specs
-  cpu     String?
-  ram     String?
-  storage String?
-  gpu     String?
-
-  os        String?
-  osVersion String?
-  hostname  String?
-  ipAddress String?
-  macAddress String?
-
-  purchaseDate  DateTime? @db.Date
-  purchasePrice Decimal?  @db.Decimal(12, 2)
-  vendorId      String?
-  vendor        Vendor?   @relation(fields: [vendorId], references: [id], onDelete: SetNull)
-
-  warrantyStart DateTime? @db.Date
-  warrantyEnd   DateTime? @db.Date
-
-  departmentId String?
-  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
-  locationId   String?
-  location     Location?   @relation(fields: [locationId], references: [id], onDelete: SetNull)
-
-  // Current assignment (denormalized pointer; history in AssetAssignment)
+  // Current responsible user (history in AssetAssignment)
   assignedUserId String?
-  notes          String? @db.Text
 
   tickets      Ticket[]
   history      AssetHistoryEvent[]
@@ -509,7 +382,6 @@ model Asset {
 
   @@index([status])
   @@index([type])
-  @@index([departmentId])
   @@index([assignedUserId])
 }
 
@@ -517,11 +389,10 @@ model AssetHistoryEvent {
   id       String @id @default(cuid())
   assetId  String
   asset    Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  event    String // RECEIVED | ASSIGNED | TRANSFERRED | REPAIR | ...
+  event    String // CREATED | ASSIGNED | UNASSIGNED | STATUS_CHANGED | REPAIR | RETIRED | TICKET_LINKED
   fromStatus AssetStatus?
   toStatus   AssetStatus?
   detail   String? @db.Text
-  cost     Decimal? @db.Decimal(12, 2)
   actorId  String?
   createdAt DateTime @default(now())
 
@@ -542,194 +413,10 @@ model AssetAssignment {
   @@index([userId])
 }
 
-// ─── Inventory ──────────────────────────────────────────────────────────────
-
-enum StockTxnType {
-  STOCK_IN
-  STOCK_OUT
-  ADJUSTMENT
-  REPAIR_USAGE
-  RETURN
-}
-
-model InventoryItem {
-  id           String  @id @default(cuid())
-  sku          String  @unique
-  name         String
-  category     String
-  brand        String?
-  model        String?
-  quantity     Int     @default(0)
-  minStock     Int     @default(5)
-  locationId   String?
-  location     Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  unitCost     Decimal? @db.Decimal(12, 2)
-  vendorId     String?
-  vendor       Vendor?  @relation(fields: [vendorId], references: [id], onDelete: SetNull)
-  workLogs     WorkLog[]
-  transactions StockTransaction[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@index([category])
-}
-
-model StockTransaction {
-  id              String       @id @default(cuid())
-  itemId          String
-  item            InventoryItem @relation(fields: [itemId], references: [id])
-  type            StockTxnType
-  quantity        Int // signed: +in / -out
-  quantityBefore  Int
-  quantityAfter   Int
-  ticketId        String?
-  ticket          Ticket? @relation(fields: [ticketId], references: [id], onDelete: SetNull)
-  reason          String?
-  actorId         String?
-  createdAt       DateTime @default(now())
-
-  @@index([itemId])
-  @@index([ticketId])
-}
-
-// ─── Software & Licenses ────────────────────────────────────────────────────
-
-model Software {
-  id          String  @id @default(cuid())
-  name        String
-  vendor      String?
-  version     String?
-  category    String?
-  licenseType String? // OEM | VOLUME | SUBSCRIPTION | OPEN_SOURCE
-  description String? @db.Text
-  licenses    License[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@unique([name, version])
-}
-
-model License {
-  id              String    @id @default(cuid())
-  softwareId      String
-  software        Software  @relation(fields: [softwareId], references: [id], onDelete: Cascade)
-  key             String?   @unique
-  seatsTotal      Int       @default(1)
-  seatsUsed       Int       @default(0)
-  purchaseDate    DateTime? @db.Date
-  expiryDate      DateTime? @db.Date
-  cost            Decimal?  @db.Decimal(12, 2)
-  vendorId        String?
-  vendor          Vendor?   @relation(fields: [vendorId], references: [id], onDelete: SetNull)
-  assignments     LicenseAssignment[]
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@index([softwareId])
-  @@index([expiryDate])
-}
-
-model LicenseAssignment {
-  id         String   @id @default(cuid())
-  licenseId  String
-  license    License  @relation(fields: [licenseId], references: [id], onDelete: Cascade)
-  userId     String
-  user       User     @relation(fields: [userId], references: [id])
-  assignedAt DateTime @default(now())
-  revokedAt  DateTime?
-
-  @@unique([licenseId, userId])
-}
-
-// ─── Vendors ────────────────────────────────────────────────────────────────
-
-model Vendor {
-  id            String  @id @default(cuid())
-  name          String  @unique
-  contactPerson String?
-  email         String?
-  phone         String?
-  address       String?
-  taxId         String?
-  assets        Asset[]
-  inventoryItems InventoryItem[]
-  licenses      License[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-
-// ─── Knowledge Base ─────────────────────────────────────────────────────────
-
-model KnowledgeCategory {
-  id       String  @id @default(cuid())
-  name     String  @unique
-  slug     String  @unique
-  parentId String?
-  parent   KnowledgeCategory?  @relation("KbCatHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
-  children KnowledgeCategory[] @relation("KbCatHierarchy")
-  articles KnowledgeArticle[]
-  createdAt DateTime @default(now())
-}
-
-model KnowledgeArticle {
-  id         String  @id @default(cuid())
-  title      String
-  slug       String  @unique
-  summary    String?
-  body       String  @db.Text
-  categoryId String?
-  category   KnowledgeCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  authorId   String?
-  author     User?   @relation("KbAuthor", fields: [authorId], references: [id], onDelete: SetNull)
-  tags       String[] @default([])
-  isPublished Boolean @default(false)
-  viewCount  Int     @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@index([categoryId])
-}
-
-// ─── Notifications · Audit · Settings ───────────────────────────────────────
-
-enum NotificationChannel {
-  IN_APP
-  EMAIL
-}
-
-model Notification {
-  id        String  @id @default(cuid())
-  userId    String
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title     String
-  body      String? @db.Text
-  link      String?
-  channel   NotificationChannel @default(IN_APP)
-  isRead    Boolean @default(false)
-  createdAt DateTime @default(now())
-
-  @@index([userId, isRead])
-}
-
-model AuditLog {
-  id        String  @id @default(cuid())
-  actorId   String?
-  actor     User?   @relation(fields: [actorId], references: [id], onDelete: SetNull)
-  action    String // ticket.status_changed | asset.assigned | role.updated | ...
-  entity    String // Ticket | Asset | User | ...
-  entityId  String?
-  before    Json?
-  after     Json?
-  ipAddress String?
-  createdAt DateTime @default(now())
-
-  @@index([entity, entityId])
-  @@index([actorId])
-  @@index([createdAt])
-}
+// ─── Settings ───────────────────────────────────────────────────────────────
 
 model SystemSetting {
-  key       String  @id // priority_matrix | sla_defaults | ...
+  key       String  @id
   value     Json
   updatedAt DateTime @updatedAt
 }

@@ -7,8 +7,6 @@ const PUBLIC_PATHS = [
   "/reset-password",
   "/api/auth",
   "/api/health",
-  "/api/public",
-  "/scan",
 ];
 
 export default auth((req) => {

@@ -6,6 +6,9 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
+import { AmbientLayer } from "@/components/motion/ambient-layer";
+import { PageTransition } from "@/components/motion/page-transition";
+import { getMotionScope } from "@/lib/motion-scope";
 
 export function DashboardShell({
   userName,
@@ -18,6 +21,7 @@ export function DashboardShell({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
+  const motionScope = getMotionScope(pathname);
 
   useEffect(() => setMenuOpen(false), [pathname]);
 
@@ -39,7 +43,11 @@ export function DashboardShell({
   }, [menuOpen]);
 
   return (
-    <div className="flex min-h-screen bg-[#f6f7f3] dark:bg-[#080d0c]">
+    <div
+      data-motion-scope={motionScope}
+      className="relative flex min-h-screen bg-[#f6f7f3] dark:bg-[#080d0c]"
+    >
+      <AmbientLayer scope={motionScope} />
       {menuOpen && (
         <div className="fixed inset-0 z-50 xl:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
           <div
@@ -64,9 +72,13 @@ export function DashboardShell({
           </div>
         </div>
       )}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="relative z-10 flex min-w-0 flex-1 flex-col">
         <Topbar userName={userName} onMenu={() => setMenuOpen(true)} />
-        <main className="flex-1 p-4 lg:p-8">{children}</main>
+        <main className="flex-1 p-4 lg:p-8">
+          <PageTransition enabled={motionScope === "high" || motionScope === "medium"}>
+            {children}
+          </PageTransition>
+        </main>
       </div>
     </div>
   );

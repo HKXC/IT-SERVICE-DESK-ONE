@@ -40,11 +40,11 @@ export default async function TicketsPage({
 
   const me = await db.user.findUnique({
     where: { id: session.user.id },
-    include: { role: { include: { permissions: { include: { permission: true } } } } },
+    include: { role: true },
   });
-  const perms = new Set(me?.role?.permissions.map((p) => p.permission.key));
-  const canSeeAll = perms.has("ticket.read_all");
-  const isEmployee = me?.role?.name === "Employee";
+  const roleName = me?.role?.name ?? null;
+  const canSeeAll = roleName === "Technician" || roleName === "Administrator";
+  const isEmployee = roleName === "User";
 
   const page = Math.max(1, Number(sp.page ?? 1) || 1);
   const q = (sp.q ?? "").trim();
@@ -56,7 +56,7 @@ export default async function TicketsPage({
     if (!canSeeAll) (where as Record<string, unknown>).requesterId = session.user.id;
   }
   if (sp.filter === "sla-risk") {
-    (where as Record<string, unknown>).status = { notIn: ["CLOSED", "RESOLVED", "PENDING_CONFIRMATION"] };
+    (where as Record<string, unknown>).status = { notIn: ["CLOSED", "RESOLVED"] };
     (where as Record<string, unknown>).slaResolutionDueAt = {
       lt: new Date(Date.now() + 4 * 3600 * 1000),
     };
@@ -139,8 +139,6 @@ export default async function TicketsPage({
             <Link href="/tickets?filter=sla-risk" className="underline">SLA Risk</Link>
             <Link href="/tickets?type=INCIDENT" className="underline">Incidents</Link>
             <Link href="/tickets?type=SERVICE_REQUEST" className="underline">Requests</Link>
-            <Link href="/tickets?type=PROBLEM" className="underline">Problems</Link>
-            <Link href="/tickets?type=CHANGE_REQUEST" className="underline">Changes</Link>
           </div>
         </CardContent>
       </Card>

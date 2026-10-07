@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { hasPermission } from "@/lib/auth-helpers";
+import { hasCapability } from "@/lib/auth-helpers";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function ReportsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
-  if (!(await hasPermission("report.read"))) redirect("/");
+  if (!(await hasCapability("report.read"))) redirect("/");
   const [byStatus, byPriority, byType, resolved, breached, mttr] = await Promise.all([
     db.ticket.groupBy({ by: ["status"], _count: true }),
     db.ticket.groupBy({ by: ["priority"], _count: true }),

@@ -11,7 +11,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     db.ticket.count({ where: { assigneeId: null, status: { notIn: ["CLOSED", "RESOLVED"] } } }),
     db.ticket.count({
       where: {
-        status: { notIn: ["CLOSED", "RESOLVED", "PENDING_CONFIRMATION"] },
+        status: { notIn: ["CLOSED", "RESOLVED"] },
         slaResolutionDueAt: { lt: new Date(Date.now() + 4 * 3600 * 1000) },
       },
     }),

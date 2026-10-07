@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import type { PermissionKey } from "@/lib/permissions";
+import { roleHasCapability, type Capability } from "@/lib/permissions";
 import { cache } from "react";
 
 /** Cached session getter for Server Components / Actions. */
@@ -11,23 +11,16 @@ export async function getCurrentUser() {
   if (!session?.user?.id) return null;
   return db.user.findUnique({
     where: { id: session.user.id },
-    include: {
-      role: { include: { permissions: { include: { permission: true } } } },
-      department: true,
-      location: true,
-    },
+    include: { role: true, department: true, location: true },
   });
 }
 
-export async function getUserPermissions(userId: string): Promise<Set<string>> {
+export async function getUserRoleName(userId: string): Promise<string | null> {
   const user = await db.user.findUnique({
     where: { id: userId },
-    include: {
-      role: { include: { permissions: { include: { permission: true } } } },
-    },
+    select: { role: { select: { name: true } } },
   });
-  const keys = user?.role?.permissions.map((rp) => rp.permission.key) ?? [];
-  return new Set(keys);
+  return user?.role?.name ?? null;
 }
 
 /**
@@ -35,37 +28,29 @@ export async function getUserPermissions(userId: string): Promise<Set<string>> {
  * MUST be called inside every Server Action / Route Handler that touches
  * protected data — UI hiding is never sufficient.
  */
-export async function requirePermission(key: PermissionKey) {
+export async function requireCapability(capability: Capability) {
   const session = await auth();
   if (!session?.user?.id) {
     const err = new Error("Unauthorized");
     (err as Error & { status?: number }).status = 401;
     throw err;
   }
-  const perms = await getUserPermissions(session.user.id);
-  if (!perms.has(key)) {
-    const err = new Error(`Forbidden: missing permission ${key}`);
+  const roleName = await getUserRoleName(session.user.id);
+  if (!roleHasCapability(roleName, capability)) {
+    const err = new Error(`Forbidden: missing capability ${capability}`);
     (err as Error & { status?: number }).status = 403;
     throw err;
   }
   return session;
 }
 
-export async function hasPermission(key: PermissionKey): Promise<boolean> {
+export async function hasCapability(capability: Capability): Promise<boolean> {
   const session = await auth();
   if (!session?.user?.id) return false;
-  const perms = await getUserPermissions(session.user.id);
-  return perms.has(key);
+  return roleHasCapability(await getUserRoleName(session.user.id), capability);
 }
 
-/** Internal notes visibility gate — Technician+ only. */
+/** Internal notes visibility gate — Technician and Administrator only. */
 export async function canViewInternalNotes(): Promise<boolean> {
-  const session = await auth();
-  if (!session?.user?.id) return false;
-  const perms = await getUserPermissions(session.user.id);
-  return (
-    perms.has("ticket.update") ||
-    perms.has("ticket.assign") ||
-    perms.has("ticket.read_all")
-  );
+  return hasCapability("ticket.update");
 }

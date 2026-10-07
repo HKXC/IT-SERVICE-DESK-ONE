@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ticketCreateSchema, type TicketCreateInput } from "@/lib/validations";
@@ -9,28 +9,22 @@ import { createTicket } from "@/actions/tickets";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea, Label } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
-function NewTicketFormInner() {
+export function NewTicketForm({
+  assets,
+}: {
+  assets: { id: string; assetTag: string; name: string }[];
+}) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const assetId = searchParams.get("assetId");
   const [error, setError] = useState<string | null>(null);
-  const [linkedAsset, setLinkedAsset] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!assetId) return;
-    fetch(`/api/public/assets/${assetId}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j) => {
-        const a = j?.data;
-        if (a) setLinkedAsset(`${a.assetTag} · ${a.name}`);
-      })
-      .catch(() => undefined);
-  }, [assetId]);
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<TicketCreateInput>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<TicketCreateInput>({
     resolver: zodResolver(ticketCreateSchema),
-    defaultValues: { impact: "MEDIUM", urgency: "MEDIUM", type: "INCIDENT", category: "Hardware" },
+    defaultValues: { priority: "MEDIUM", type: "INCIDENT", category: "Hardware" },
   });
 
   return (
@@ -44,19 +38,13 @@ function NewTicketFormInner() {
           onSubmit={handleSubmit(async (v) => {
             setError(null);
             try {
-              const r = await createTicket(assetId ? { ...v, assetId } : v);
+              const r = await createTicket(v);
               router.push(`/tickets/${r.id}`);
             } catch (e) {
               setError(e instanceof Error ? e.message : "Failed to create ticket");
             }
           })}
         >
-          {assetId && (
-            <div className="flex items-center gap-2 rounded-lg border border-[#0D9488]/30 bg-teal-50 p-3 text-sm dark:bg-teal-950/30">
-              <span className="text-muted-foreground">Linked asset:</span>
-              <Badge variant="secondary">{linkedAsset ?? "loading…"}</Badge>
-            </div>
-          )}
           <div className="space-y-1.5">
             <Label>Title</Label>
             <Input {...register("title")} placeholder="e.g. Laptop won't boot after update" />
@@ -67,11 +55,7 @@ function NewTicketFormInner() {
               <Label>Type</Label>
               <select {...register("type")} className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm">
                 <option value="INCIDENT">Incident</option>
-                <option value="SERVICE_REQUEST">Service Request</option>
-                <option value="REPAIR">Repair</option>
-                <option value="PROBLEM">Problem</option>
-                <option value="CHANGE_REQUEST">Change Request</option>
-                <option value="ACCESS_REQUEST">Access Request</option>
+                <option value="SERVICE_REQUEST">Request</option>
               </select>
             </div>
             <div className="space-y-1.5">
@@ -87,19 +71,23 @@ function NewTicketFormInner() {
               </select>
             </div>
             <div className="space-y-1.5">
-              <Label>Impact</Label>
-              <select {...register("impact")} className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm">
-                <option>HIGH</option>
-                <option>MEDIUM</option>
-                <option>LOW</option>
+              <Label>Priority</Label>
+              <select {...register("priority")} className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm">
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="CRITICAL">Critical</option>
               </select>
             </div>
             <div className="space-y-1.5">
-              <Label>Urgency</Label>
-              <select {...register("urgency")} className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm">
-                <option>HIGH</option>
-                <option>MEDIUM</option>
-                <option>LOW</option>
+              <Label>Related asset (optional)</Label>
+              <select {...register("assetId")} className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm" defaultValue="">
+                <option value="">— None —</option>
+                {assets.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.assetTag} · {a.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -113,18 +101,10 @@ function NewTicketFormInner() {
             {isSubmitting ? "Creating…" : "Create Ticket"}
           </Button>
           <p className="text-xs text-muted-foreground">
-            Priority is auto-derived from Impact × Urgency matrix. SLA deadlines attach automatically.
+            Priority is set directly. SLA deadlines attach automatically.
           </p>
         </form>
       </CardContent>
     </Card>
-  );
-}
-
-export function NewTicketForm() {
-  return (
-    <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
-      <NewTicketFormInner />
-    </Suspense>
   );
 }

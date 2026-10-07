@@ -24,7 +24,7 @@ export async function GET(req: Request) {
         resolvedAt: null,
         slaResolutionBreached: false,
         slaResolutionDueAt: { lt: now },
-        status: { notIn: ["CLOSED", "RESOLVED", "WAITING_USER", "WAITING_VENDOR", "WAITING_PART"] },
+        status: { notIn: ["CLOSED", "RESOLVED", "WAITING_USER"] },
       },
       data: { slaResolutionBreached: true },
     }),

@@ -6,11 +6,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "IT Service Desk & Asset Management",
-    template: "%s · IT Service Desk",
+    default: "IT Helpdesk",
+    template: "%s · IT Helpdesk",
   },
   description:
-    "Enterprise IT Service Desk, Asset Management, SLA, Inventory & Knowledge platform.",
+    "IT Helpdesk — tickets, comments, assets, dashboard and reports.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

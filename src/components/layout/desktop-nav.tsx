@@ -30,34 +30,11 @@ const groups: NavGroup[] = [
     ],
   },
   {
-    label: "Inventory",
-    paths: ["/inventory"],
-    items: [
-      { label: "Stock overview", href: "/inventory" },
-      { label: "Transactions", href: "/inventory/transactions" },
-    ],
-  },
-  {
-    label: "Software",
-    paths: ["/software"],
-    items: [{ label: "Software & licenses", href: "/software" }],
-  },
-  {
-    label: "Knowledge",
-    paths: ["/knowledge"],
-    items: [
-      { label: "Knowledge base", href: "/knowledge" },
-      { label: "New article", href: "/knowledge/new" },
-    ],
-  },
-  {
     label: "Manage",
-    paths: ["/users", "/reports", "/audit", "/vendors", "/settings"],
+    paths: ["/users", "/reports", "/settings"],
     items: [
       { label: "Users", href: "/users" },
       { label: "Reports", href: "/reports" },
-      { label: "Audit logs", href: "/audit" },
-      { label: "Vendors & SLA", href: "/vendors" },
       { label: "Settings", href: "/settings" },
     ],
   },

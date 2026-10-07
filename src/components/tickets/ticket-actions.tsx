@@ -41,11 +41,20 @@ export function TicketActions({
       <CardContent className="space-y-2">
         <p className="text-xs text-muted-foreground">Current: {currentStatus.replaceAll("_", " ")}</p>
         <div className="flex flex-wrap gap-2">
-          {next.map((s) => (
-            <Button key={s} size="sm" variant="outline" disabled={busy} onClick={() => go(s)}>
-              → {s.replaceAll("_", " ")}
-            </Button>
-          ))}
+          {next.map((s) => {
+            const reopen = currentStatus === "RESOLVED" && s === "IN_PROGRESS";
+            return (
+              <Button
+                key={s}
+                size="sm"
+                variant={reopen ? "default" : "outline"}
+                disabled={busy}
+                onClick={() => go(s)}
+              >
+                {reopen ? "Reopen" : `→ ${s.replaceAll("_", " ")}`}
+              </Button>
+            );
+          })}
           {next.length === 0 && <p className="text-sm text-muted-foreground">No further transitions.</p>}
         </div>
         {error && <p className="text-xs text-red-600">{error}</p>}

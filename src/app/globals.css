@@ -61,3 +61,106 @@
     color: #0b1110;
   }
 }
+
+/* ------------------------------------------------------------------ *
+ * Ambient motion layer (visual only — no layout / colour changes)      *
+ * ------------------------------------------------------------------ */
+
+@keyframes page-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.page-fade {
+  animation: page-fade 200ms ease-out both;
+}
+
+/* Cursor ambient glow ------------------------------------------------ */
+.ambient-root {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+.ambient-root[data-ready="true"] {
+  opacity: 1;
+}
+
+.ambient-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 9999px;
+  transform: translate3d(var(--ambient-x, 50vw), var(--ambient-y, 50vh), 0)
+    translate(-50%, -50%);
+  will-change: transform;
+}
+
+.ambient-core {
+  width: 620px;
+  height: 620px;
+  background: radial-gradient(
+    circle,
+    rgba(169, 195, 149, var(--ambient-core, 0.1)) 0%,
+    rgba(169, 195, 149, 0) 70%
+  );
+}
+
+.ambient-depth {
+  width: 1120px;
+  height: 1120px;
+  background: radial-gradient(
+    circle,
+    rgba(169, 195, 149, var(--ambient-depth, 0.05)) 0%,
+    rgba(169, 195, 149, 0) 65%
+  );
+}
+
+[data-motion-scope="high"] {
+  --ambient-core: 0.14;
+  --ambient-depth: 0.06;
+}
+[data-motion-scope="medium"] {
+  --ambient-core: 0.1;
+  --ambient-depth: 0.045;
+}
+[data-motion-scope="low"] {
+  --ambient-core: 0.055;
+  --ambient-depth: 0.025;
+}
+
+/* Card hover lift (interactive / KPI cards only) --------------------- */
+@media (hover: hover) and (pointer: fine) {
+  .card-motion {
+    transition:
+      transform 200ms cubic-bezier(0.22, 0.61, 0.36, 1),
+      border-color 200ms ease,
+      box-shadow 200ms ease;
+  }
+  .card-motion:hover {
+    transform: translateY(-2px);
+    border-color: hsl(var(--primary) / 0.4);
+    box-shadow:
+      0 10px 30px -14px hsl(var(--primary) / 0.35),
+      0 2px 10px -4px rgb(0 0 0 / 0.45);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-fade {
+    animation: none;
+  }
+  .ambient-root {
+    transition: none;
+  }
+  .card-motion:hover {
+    transform: none;
+  }
+}

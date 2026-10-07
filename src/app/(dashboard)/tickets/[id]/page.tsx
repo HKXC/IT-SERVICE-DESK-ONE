@@ -6,11 +6,32 @@ import { PriorityBadge, Badge } from "@/components/ui/badge";
 import { TicketActions } from "@/components/tickets/ticket-actions";
 import { CommentBox } from "@/components/tickets/comment-box";
 import { Attachments } from "@/components/tickets/attachments";
-import { AssignControl, WorkLogForm } from "@/components/tickets/ticket-ops";
-import { canViewInternalNotes, hasPermission } from "@/lib/auth-helpers";
+import { AssignControl, PriorityControl } from "@/components/tickets/ticket-ops";
+import { getTicketTimeline } from "@/actions/tickets";
+import { canViewInternalNotes, hasCapability } from "@/lib/auth-helpers";
 import { formatDuration } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
+
+type StreamItem =
+  | {
+      kind: "comment";
+      id: string;
+      at: Date;
+      body: string;
+      author: string;
+      visibility: "PUBLIC" | "INTERNAL";
+    }
+  | {
+      kind: "event";
+      id: string;
+      at: Date;
+      event: string;
+      fromStatus: string | null;
+      toStatus: string | null;
+      detail: string | null;
+      actor: string | null;
+    };
 
 export default async function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -23,41 +44,50 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
       requester: { select: { name: true, email: true } },
       assignee: { select: { name: true } },
       asset: { select: { id: true, assetTag: true, name: true } },
-      workLogs: {
-        include: { author: { select: { name: true } } },
-        orderBy: { createdAt: "desc" },
-      },
-      timeline: {
-        include: { actor: { select: { name: true } } },
-        orderBy: { createdAt: "desc" },
-        take: 50,
-      },
       attachments: true,
     },
   });
   if (!ticket) notFound();
 
   const showInternal = await canViewInternalNotes();
-  const canAssign = await hasPermission("ticket.assign");
+  const canAssign = await hasCapability("ticket.assign");
+  const canUpdate = await hasCapability("ticket.update");
   const canUpload =
-    ticket.requesterId === session.user.id || (await hasPermission("ticket.update"));
-  const [technicians, parts] = await Promise.all([
+    ticket.requesterId === session.user.id || canUpdate;
+  const [technicians, timeline] = await Promise.all([
     db.user.findMany({
-      where: { isActive: true, role: { name: { not: "Employee" } } },
+      where: { isActive: true, role: { name: { not: "User" } } },
       select: { id: true, name: true, email: true },
       orderBy: { name: "asc" },
     }),
-    db.inventoryItem.findMany({
-      select: { id: true, name: true, quantity: true },
-      orderBy: { name: "asc" },
-      take: 200,
-    }),
+    getTicketTimeline(id),
   ]);
-  const comments = await db.ticketComment.findMany({
-    where: { ticketId: id, ...(showInternal ? {} : { type: "PUBLIC" }) },
-    include: { author: { select: { name: true } } },
-    orderBy: { createdAt: "asc" },
-  });
+
+  // One ordered history: comments and status/assignment events together.
+  const stream: StreamItem[] = [
+    ...timeline.comments.map(
+      (c): StreamItem => ({
+        kind: "comment",
+        id: c.id,
+        at: c.createdAt,
+        body: c.body,
+        author: c.author?.name ?? "Unknown",
+        visibility: c.type,
+      })
+    ),
+    ...timeline.events.map(
+      (e): StreamItem => ({
+        kind: "event",
+        id: e.id,
+        at: e.createdAt,
+        event: e.event,
+        fromStatus: e.fromStatus,
+        toStatus: e.toStatus,
+        detail: e.detail,
+        actor: e.actor?.name ?? null,
+      })
+    ),
+  ].sort((a, b) => a.at.getTime() - b.at.getTime());
 
   const now = Date.now();
   const respRem = ticket.slaResponseDueAt
@@ -77,7 +107,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
       </div>
 
       {(respRem !== null || resRem !== null) && (
-        <Card className="border-[#0D9488]/30">
+        <Card className="card-motion border-[#0D9488]/30">
           <CardContent className="flex flex-wrap gap-6 p-4 text-sm">
             {respRem !== null && (
               <div>
@@ -101,59 +131,59 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
-          <Card>
+          <Card className="card-motion">
             <CardHeader><CardTitle className="text-sm">Description</CardTitle></CardHeader>
             <CardContent><p className="whitespace-pre-wrap text-sm">{ticket.description}</p></CardContent>
           </Card>
-          <Card>
-            <CardHeader><CardTitle className="text-sm">Conversation {showInternal ? "" : "(public only)"}</CardTitle></CardHeader>
+
+          <Card className="card-motion">
+            <CardHeader>
+              <CardTitle className="text-sm">
+                Activity {showInternal ? "" : "(public only)"}
+              </CardTitle>
+            </CardHeader>
             <CardContent className="space-y-3">
-              {comments.map((c) => (
-                <div key={c.id} className={`rounded-lg border p-3 text-sm ${c.type === "INTERNAL" ? "border-amber-300 bg-amber-50 dark:bg-amber-950/30" : ""}`}>
-                  <p className="mb-1 text-xs text-muted-foreground">
-                    {c.author?.name ?? "Unknown"} · {new Date(c.createdAt).toLocaleString()}
-                    {c.type === "INTERNAL" && " · Internal note"}
-                  </p>
-                  <p className="whitespace-pre-wrap">{c.body}</p>
-                </div>
-              ))}
-              {comments.length === 0 && <p className="text-sm text-muted-foreground">No messages yet.</p>}
+              {stream.map((item) =>
+                item.kind === "comment" ? (
+                  <div
+                    key={item.id}
+                    className={`rounded-lg border p-3 text-sm ${item.visibility === "INTERNAL" ? "border-amber-300 bg-amber-50 dark:bg-amber-950/30" : ""}`}
+                  >
+                    <p className="mb-1 text-xs text-muted-foreground">
+                      {item.author} · {new Date(item.at).toLocaleString()} ·{" "}
+                      <Badge variant={item.visibility === "INTERNAL" ? "warning" : "info"}>
+                        {item.visibility === "INTERNAL" ? "Internal" : "Public"}
+                      </Badge>
+                    </p>
+                    <p className="whitespace-pre-wrap">{item.body}</p>
+                  </div>
+                ) : (
+                  <div key={item.id} className="flex gap-2 text-sm">
+                    <span className="text-muted-foreground">{new Date(item.at).toLocaleString()}</span>
+                    <span>
+                      <strong>{item.event.replaceAll("_", " ")}</strong>{" "}
+                      {item.fromStatus && item.toStatus ? `${item.fromStatus} → ${item.toStatus}` : ""}
+                      {item.detail ? ` · ${item.detail}` : ""}
+                      {item.actor ? ` (${item.actor})` : ""}
+                    </span>
+                  </div>
+                )
+              )}
+              {stream.length === 0 && <p className="text-sm text-muted-foreground">No activity yet.</p>}
               <CommentBox ticketId={ticket.id} canInternal={showInternal} />
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader><CardTitle className="text-sm">Work Logs ({ticket.workLogs.length})</CardTitle></CardHeader>
-            <CardContent className="space-y-2">
-              {ticket.workLogs.map((w) => (
-                <div key={w.id} className="rounded-lg border p-3 text-sm">
-                  <p className="text-xs text-muted-foreground">{w.author?.name} · {w.timeSpentMin} min · {new Date(w.createdAt).toLocaleString()}</p>
-                  {w.title && <p className="font-semibold">{w.title}</p>}
-                  <p className="whitespace-pre-wrap">{w.body}</p>
-                </div>
-              ))}
-              {ticket.workLogs.length === 0 && <p className="text-sm text-muted-foreground">No work logged.</p>}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader><CardTitle className="text-sm">Activity Timeline</CardTitle></CardHeader>
-            <CardContent className="space-y-2">
-              {ticket.timeline.map((e) => (
-                <div key={e.id} className="flex gap-2 text-sm">
-                  <span className="text-muted-foreground">{new Date(e.createdAt).toLocaleString()}</span>
-                  <span><strong>{e.event}</strong> {e.fromStatus && e.toStatus ? `${e.fromStatus} → ${e.toStatus}` : ""} {e.detail ? `· ${e.detail}` : ""} {e.actor ? `(${e.actor.name})` : ""}</span>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+
         </div>
 
         <div className="space-y-4">
-          <Card>
+          <Card className="card-motion">
             <CardHeader><CardTitle className="text-sm">Details</CardTitle></CardHeader>
             <CardContent className="space-y-2 text-sm">
               <p><span className="text-muted-foreground">Requester:</span> {ticket.requester.name} ({ticket.requester.email})</p>
               <p><span className="text-muted-foreground">Assignee:</span> {ticket.assignee?.name ?? "Unassigned"}</p>
-              <p><span className="text-muted-foreground">Type:</span> {ticket.type} · {ticket.category}</p>
+              <p><span className="text-muted-foreground">Type:</span> {ticket.type.replaceAll("_", " ")} · {ticket.category}</p>
+              <p><span className="text-muted-foreground">Priority:</span> <PriorityBadge priority={ticket.priority} /></p>
               <p><span className="text-muted-foreground">Asset:</span> {ticket.asset ? `${ticket.asset.assetTag} · ${ticket.asset.name}` : "—"}</p>
               <p><span className="text-muted-foreground">Created:</span> {new Date(ticket.createdAt).toLocaleString()}</p>
               {ticket.firstResponseAt && <p><span className="text-muted-foreground">First response:</span> {new Date(ticket.firstResponseAt).toLocaleString()}</p>}
@@ -161,6 +191,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
             </CardContent>
           </Card>
           <TicketActions ticketId={ticket.id} currentStatus={ticket.status} />
+          <PriorityControl ticketId={ticket.id} currentPriority={ticket.priority} canEdit={canUpdate} />
           <AssignControl
             ticketId={ticket.id}
             currentAssigneeId={ticket.assigneeId}
@@ -170,7 +201,6 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
               name: t.name ?? t.email ?? "Unknown",
             }))}
           />
-          {showInternal && <WorkLogForm ticketId={ticket.id} parts={parts} />}
           <Attachments
             ticketId={ticket.id}
             canUpload={canUpload}

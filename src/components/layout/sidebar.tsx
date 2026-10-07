@@ -8,20 +8,14 @@ import {
   AlertTriangle,
   FilePlus2,
   Monitor,
-  Boxes,
   ArrowLeftRight,
-  KeyRound,
-  BookOpen,
   Users,
   BarChart3,
-  ScrollText,
   Settings,
   ChevronDown,
   Inbox,
   Timer,
   CircleAlert,
-  Repeat,
-  Shuffle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -97,8 +91,8 @@ export function Sidebar({ counts, className }: { counts?: { unassigned?: number;
           IT
         </div>
         <div className="leading-tight">
-          <p className="text-sm font-bold text-white">IT Service Desk</p>
-          <p className="text-[11px] text-zinc-500">Asset Management</p>
+          <p className="text-sm font-bold text-white">IT Helpdesk</p>
+          <p className="text-[11px] text-zinc-500">Service Desk</p>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto py-2">
@@ -129,9 +123,7 @@ export function Sidebar({ counts, className }: { counts?: { unassigned?: number;
               badge: counts?.slaRisk ? String(counts.slaRisk) : undefined,
             },
             { href: "/tickets?type=INCIDENT", label: "Incidents", icon: <AlertTriangle className={ic} /> },
-            { href: "/tickets?type=SERVICE_REQUEST", label: "Service Requests", icon: <FilePlus2 className={ic} /> },
-            { href: "/tickets?type=PROBLEM", label: "Problems", icon: <Repeat className={ic} /> },
-            { href: "/tickets?type=CHANGE_REQUEST", label: "Changes", icon: <Shuffle className={ic} /> },
+            { href: "/tickets?type=SERVICE_REQUEST", label: "Requests", icon: <FilePlus2 className={ic} /> },
           ]}
         />
         <Group
@@ -142,27 +134,10 @@ export function Sidebar({ counts, className }: { counts?: { unassigned?: number;
           ]}
         />
         <Group
-          title="Inventory"
-          items={[
-            { href: "/inventory", label: "Inventory", icon: <Boxes className={ic} /> },
-            { href: "/inventory/transactions", label: "Stock Transactions", icon: <ScrollText className={ic} /> },
-          ]}
-        />
-        <Group
-          title="Software"
-          items={[{ href: "/software", label: "Software & Licenses", icon: <KeyRound className={ic} /> }]}
-        />
-        <Group
-          title="Knowledge"
-          items={[{ href: "/knowledge", label: "Knowledge Base", icon: <BookOpen className={ic} /> }]}
-        />
-        <Group
           title="Management"
           items={[
             { href: "/users", label: "Users", icon: <Users className={ic} /> },
             { href: "/reports", label: "Reports", icon: <BarChart3 className={ic} /> },
-            { href: "/audit", label: "Audit Logs", icon: <ScrollText className={ic} /> },
-            { href: "/vendors", label: "Vendors & SLA", icon: <Settings className={ic} /> },
           ]}
         />
         <Group
@@ -173,7 +148,7 @@ export function Sidebar({ counts, className }: { counts?: { unassigned?: number;
         />
       </div>
       <div className="border-t border-white/10 p-4 text-[11px] text-zinc-500">
-        IT Service Desk · Workspace
+        IT Helpdesk · Workspace
       </div>
     </aside>
   );

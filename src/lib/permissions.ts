@@ -1,94 +1,41 @@
-// Canonical permission keys. AuthZ checks MUST use these keys server-side.
-// Never check role names directly — roles are just permission bundles.
-export const PERMISSIONS = [
+// Three fixed roles. Authorization MUST use these capabilities server-side —
+// never check role names inline in actions/pages.
+export const ROLES = ["User", "Technician", "Administrator"] as const;
+export type RoleName = (typeof ROLES)[number];
+
+export const CAPABILITIES = [
   "ticket.create",
-  "ticket.read",
   "ticket.read_all",
   "ticket.assign",
   "ticket.update",
-  "ticket.delete",
   "ticket.resolve",
   "ticket.close",
-  "asset.create",
   "asset.read",
-  "asset.update",
-  "asset.assign",
-  "asset.retire",
-  "asset.dispose",
-  "inventory.read",
-  "inventory.manage",
-  "license.read",
-  "license.manage",
+  "asset.manage",
   "user.manage",
-  "role.manage",
   "report.read",
-  "audit.read",
   "settings.manage",
-  "kb.read",
-  "kb.manage",
-  "vendor.manage",
-  "sla.manage",
 ] as const;
 
-export type PermissionKey = (typeof PERMISSIONS)[number];
+export type Capability = (typeof CAPABILITIES)[number];
 
-// Default role → permissions seed map (also mirrored in prisma/seed.ts)
-export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
-  Employee: ["ticket.create", "ticket.read", "asset.read", "kb.read"],
+// Default role → capabilities (mirrored in prisma/seed.ts)
+export const ROLE_CAPABILITIES: Record<RoleName, Capability[]> = {
+  User: ["ticket.create"],
   Technician: [
     "ticket.create",
-    "ticket.read",
-    "ticket.update",
-    "ticket.resolve",
-    "asset.read",
-    "inventory.read",
-    "license.read",
-    "kb.read",
-  ],
-  "Team Lead": [
-    "ticket.create",
-    "ticket.read",
     "ticket.read_all",
     "ticket.assign",
     "ticket.update",
     "ticket.resolve",
     "ticket.close",
     "asset.read",
-    "inventory.read",
     "report.read",
-    "kb.read",
-    "kb.manage",
   ],
-  "Asset Officer": [
-    "ticket.read",
-    "asset.create",
-    "asset.read",
-    "asset.update",
-    "asset.assign",
-    "asset.retire",
-    "inventory.read",
-    "inventory.manage",
-    "license.read",
-    "license.manage",
-    "vendor.manage",
-    "kb.read",
-  ],
-  "IT Manager": [
-    "ticket.create",
-    "ticket.read",
-    "ticket.read_all",
-    "ticket.assign",
-    "ticket.update",
-    "ticket.resolve",
-    "ticket.close",
-    "asset.read",
-    "asset.update",
-    "inventory.read",
-    "license.read",
-    "report.read",
-    "audit.read",
-    "kb.read",
-    "sla.manage",
-  ],
-  Administrator: [...PERMISSIONS],
+  Administrator: [...CAPABILITIES],
 };
+
+export function roleHasCapability(role: string | null | undefined, capability: Capability): boolean {
+  if (!role) return false;
+  return (ROLE_CAPABILITIES[role as RoleName] ?? []).includes(capability);
+}

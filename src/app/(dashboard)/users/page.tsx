@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { hasPermission } from "@/lib/auth-helpers";
+import { hasCapability } from "@/lib/auth-helpers";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function UsersPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
-  if (!(await hasPermission("user.manage"))) redirect("/");
+  if (!(await hasCapability("user.manage"))) redirect("/");
   const [users, roles, departments, locations] = await Promise.all([
     db.user.findMany({ include: { role: true, department: true }, orderBy: { createdAt: "desc" }, take: 100 }),
     db.role.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),

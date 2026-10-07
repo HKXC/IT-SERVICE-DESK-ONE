@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { hasPermission } from "@/lib/auth-helpers";
-import { audit } from "@/lib/audit";
+import { hasCapability } from "@/lib/auth-helpers";
 import { uploadFile, validateUpload, toErrorMessage } from "@/lib/storage";
 import { rateLimit, rateLimitKey } from "@/lib/rate-limit";
 
@@ -13,8 +12,8 @@ type RouteParams = { params: Promise<{ id: string }> };
 /**
  * POST /api/tickets/:id/attachments — multipart form-data, field "file".
  * Allowed: the ticket requester, or staff holding ticket.update.
- * Every success writes TicketAttachment + TimelineEvent + AuditLog atomically
- * where the database writes are concerned (provider upload precedes the txn).
+ * Every success writes TicketAttachment + TimelineEvent atomically where the
+ * database writes are concerned (provider upload precedes the txn).
  */
 export async function POST(req: Request, { params }: RouteParams) {
   const session = await auth();
@@ -37,14 +36,7 @@ export async function POST(req: Request, { params }: RouteParams) {
     return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
   }
 
-  const [canRead, canReadAll, canEditAny] = await Promise.all([
-    hasPermission("ticket.read"),
-    hasPermission("ticket.read_all"),
-    hasPermission("ticket.update"),
-  ]);
-  if (!canRead && !canReadAll && !canEditAny) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const canEditAny = await hasCapability("ticket.update");
   const isOwner = ticket.requesterId === userId;
   if (!isOwner && !canEditAny) {
     return NextResponse.json(
@@ -110,14 +102,6 @@ export async function POST(req: Request, { params }: RouteParams) {
       },
     });
     return created;
-  });
-
-  await audit({
-    actorId: userId,
-    action: "ticket.file_attached",
-    entity: "Ticket",
-    entityId: ticketId,
-    after: { fileName: file.name, size: file.size, key: stored.key },
   });
 
   return NextResponse.json({ data: attachment }, { status: 201 });

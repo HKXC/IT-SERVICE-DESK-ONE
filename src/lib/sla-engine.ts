@@ -26,11 +26,11 @@ export function targetsFor(
   priority: TicketPriority
 ): { responseMin: number; resolutionMin: number } {
   switch (priority) {
-    case "P1":
+    case "CRITICAL":
       return { responseMin: policy.p1ResponseMin, resolutionMin: policy.p1ResolutionMin };
-    case "P2":
+    case "HIGH":
       return { responseMin: policy.p2ResponseMin, resolutionMin: policy.p2ResolutionMin };
-    case "P4":
+    case "LOW":
       return { responseMin: policy.p4ResponseMin, resolutionMin: policy.p4ResolutionMin };
     default:
       return { responseMin: policy.p3ResponseMin, resolutionMin: policy.p3ResolutionMin };

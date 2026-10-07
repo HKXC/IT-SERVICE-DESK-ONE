@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { hasPermission } from "@/lib/auth-helpers";
+import { hasCapability } from "@/lib/auth-helpers";
 import { getS3Config, toErrorMessage } from "@/lib/storage";
 
 type RouteParams = { params: Promise<{ id: string; aid: string }> };
@@ -29,7 +29,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
     return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
   }
 
-  const canEditAny = await hasPermission("ticket.update");
+  const canEditAny = await hasCapability("ticket.update");
   const isOwner = attachment.ticket.requesterId === userId;
   if (!isOwner && !canEditAny) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

@@ -33,9 +33,13 @@ export function Badge({ className, variant, ...props }: BadgeProps) {
   return <span className={cn(badgeVariants({ variant }), className)} {...props} />;
 }
 
-export function PriorityBadge({ priority }: { priority: "P1" | "P2" | "P3" | "P4" }) {
-  const map = { P1: "p1", P2: "p2", P3: "p3", P4: "p4" } as const;
-  const labels = { P1: "P1 · Critical", P2: "P2 · High", P3: "P3 · Medium", P4: "P4 · Low" } as const;
+export function PriorityBadge({
+  priority,
+}: {
+  priority: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+}) {
+  const map = { CRITICAL: "p1", HIGH: "p2", MEDIUM: "p3", LOW: "p4" } as const;
+  const labels = { CRITICAL: "Critical", HIGH: "High", MEDIUM: "Medium", LOW: "Low" } as const;
   return <Badge variant={map[priority]}>{labels[priority]}</Badge>;
 }
 

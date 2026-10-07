@@ -4,10 +4,6 @@ import type { TicketType } from "@prisma/client";
 const PREFIX: Record<TicketType, string> = {
   INCIDENT: "INC",
   SERVICE_REQUEST: "REQ",
-  PROBLEM: "PRB",
-  CHANGE_REQUEST: "CHG",
-  ACCESS_REQUEST: "ACC",
-  REPAIR: "REP",
 };
 
 /**
